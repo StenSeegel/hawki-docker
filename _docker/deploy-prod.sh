@@ -3,9 +3,40 @@ set -e  # Exit on error
 
 echo "🚀 Starting HAWKI Production Deployment (build from image)..."
 
+# =====================================================
+# Ensure Dockerfile exists in parent directory
+# =====================================================
+ensure_dockerfile_exists() {
+    local parent_dir="$(cd .. && pwd)"
+    local dockerfile_source="$(pwd)/dockerfile"
+    
+    if [ ! -f "$parent_dir/Dockerfile" ]; then
+        echo "📋 First-time setup: Copying Dockerfile to project root..."
+        
+        if [ ! -d "$dockerfile_source" ] || [ ! -f "$dockerfile_source/Dockerfile" ]; then
+            echo "❌ Error: dockerfile/Dockerfile not found in _docker directory!"
+            exit 1
+        fi
+        
+        cp "$dockerfile_source/Dockerfile" "$parent_dir/Dockerfile"
+        echo "✅ Dockerfile copied to $parent_dir/Dockerfile"
+        
+        # Also copy DOCKER.md if it exists (optional documentation)
+        if [ -f "$dockerfile_source/DOCKER.md" ]; then
+            cp "$dockerfile_source/DOCKER.md" "$parent_dir/DOCKER.md"
+            echo "✅ DOCKER.md copied to $parent_dir/DOCKER.md"
+        fi
+        
+        echo ""
+    fi
+}
+
+# Check and copy Dockerfile if needed
+ensure_dockerfile_exists
+
 # Check if .env file exists
 if [ ! -f ".env" ]; then
-    echo "❌ Error: .env file not found in _docker_production directory!"
+    echo "❌ Error: .env file not found in _docker directory!"
     echo "   Please create .env file from .env.example"
     exit 1
 fi
@@ -45,18 +76,18 @@ fi
 cd ..
 
 # Load proxy configuration from .env file
-if [ -f "_docker_production/.env" ]; then
-    export HTTP_PROXY=$(grep -E "^DOCKER_HTTP_PROXY=" _docker_production/.env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
-    export HTTPS_PROXY=$(grep -E "^DOCKER_HTTPS_PROXY=" _docker_production/.env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
-    export NO_PROXY=$(grep -E "^DOCKER_NO_PROXY=" _docker_production/.env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
+if [ -f "_docker/.env" ]; then
+    export HTTP_PROXY=$(grep -E "^DOCKER_HTTP_PROXY=" _docker/.env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
+    export HTTPS_PROXY=$(grep -E "^DOCKER_HTTPS_PROXY=" _docker/.env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
+    export NO_PROXY=$(grep -E "^DOCKER_NO_PROXY=" _docker/.env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
     
     # Load VITE variables from .env
-    export APP_NAME=$(grep -E "^APP_NAME=" _docker_production/.env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
-    export REVERB_APP_KEY=$(grep -E "^REVERB_APP_KEY=" _docker_production/.env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
-    export REVERB_HOST=$(grep -E "^REVERB_HOST=" _docker_production/.env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
-    export VITE_REVERB_HOST=$(grep -E "^VITE_REVERB_HOST=" _docker_production/.env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
-    export REVERB_PORT=$(grep -E "^REVERB_PORT=" _docker_production/.env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
-    export REVERB_SCHEME=$(grep -E "^REVERB_SCHEME=" _docker_production/.env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
+    export APP_NAME=$(grep -E "^APP_NAME=" _docker/.env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
+    export REVERB_APP_KEY=$(grep -E "^REVERB_APP_KEY=" _docker/.env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
+    export REVERB_HOST=$(grep -E "^REVERB_HOST=" _docker/.env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
+    export VITE_REVERB_HOST=$(grep -E "^VITE_REVERB_HOST=" _docker/.env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
+    export REVERB_PORT=$(grep -E "^REVERB_PORT=" _docker/.env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
+    export REVERB_SCHEME=$(grep -E "^REVERB_SCHEME=" _docker/.env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
 fi
 
 # Set defaults for VITE variables
@@ -80,7 +111,7 @@ echo ""
 if [ -z "$VITE_REVERB_HOST" ]; then
     echo "❌ ERROR: VITE_REVERB_HOST is not set!"
     echo ""
-    echo "   Please set in _docker_production/.env:"
+    echo "   Please set in _docker/.env:"
     echo "     REVERB_HOST=your-domain.com"
     echo "     VITE_REVERB_HOST=your-domain.com"
     echo ""
@@ -94,14 +125,14 @@ if [ -z "$VITE_REVERB_APP_KEY" ]; then
 fi
 
 echo "🔨 Building app image..."
-docker compose -f _docker_production/docker-compose.prod.yml build \
+docker compose -f _docker/docker-compose.prod.yml build \
   --no-cache --pull app
 
 echo "🚢 Starting containers..."
-docker compose -f _docker_production/docker-compose.prod.yml up -d --force-recreate --remove-orphans
+docker compose -f _docker/docker-compose.prod.yml up -d --force-recreate --remove-orphans
 
 echo "⚙️  Running Laravel optimizations..."
-docker compose -f _docker_production/docker-compose.prod.yml exec app bash -c "php artisan migrate --force && \
+docker compose -f _docker/docker-compose.prod.yml exec app bash -c "php artisan migrate --force && \
     php artisan db:seed --force && \
     php artisan config:cache && \
     php artisan route:cache && \
@@ -109,10 +140,10 @@ docker compose -f _docker_production/docker-compose.prod.yml exec app bash -c "p
     php artisan optimize:clear"
 
 echo "📝 Generating Git info..."
-docker compose -f _docker_production/docker-compose.prod.yml exec app bash -c "echo '[]' > /var/www/html/storage/app/test_users.json && git config --global --add safe.directory /var/www/html && /var/www/html/git_info.sh"
+docker compose -f _docker/docker-compose.prod.yml exec app bash -c "echo '[]' > /var/www/html/storage/app/test_users.json && git config --global --add safe.directory /var/www/html && /var/www/html/git_info.sh"
 
 # Get APP_URL from .env file
-cd _docker_production
+cd _docker
 APP_URL=$(grep -E "^APP_URL=" .env | cut -d '=' -f2- | tr -d '"' | tr -d "'")
 
 echo ""

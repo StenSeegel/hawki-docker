@@ -2,25 +2,44 @@
 
 This directory contains all Docker production and staging deployment configurations.
 
+> **⚠️ WICHTIG**: Dieses Repository ist als **Submodule** konzipiert und wird in das HAWKI-Hauptprojekt eingebunden. Siehe [`SETUP.md`](SETUP.md) für Details zur Integration und automatischen Datei-Verwaltung.
+
 ## 📁 File Structure
 
 ```
-_docker_production/
-├── docker-compose.yml              # Unified docker-compose with profiles
-├── deploy-prod.sh                  # Deploy with HAWK-provided official image (Production)
-├── deploy-staging.sh               # Deploy with custom build (Staging/Testing)
-├── deploy-dev.sh                   # Deploy for active development (live code)
-├── stop-prod.sh                    # Stop production containers (with confirmation)
-├── stop-staging.sh                 # Stop staging containers
-├── stop-dev.sh                     # Stop development containers
-├── update-dev.sh                   # Quick update for dev setup (no rebuild)
-├── .env                            # Environment variables (NOT in Git!)
-├── .env.example                    # Environment template
-├── nginx.default.conf.template     # Nginx configuration template
-├── storage/                        # Persistent storage
-├── config/                         # Production config overrides
-└── certs/                          # SSL certificates
+HAWKI/                              # Hauptprojekt-Root
+├── Dockerfile                      # ← Automatisch kopiert von _docker/dockerfile/
+├── DOCKER.md                       # ← Automatisch kopiert (optional)
+├── _docker/                        # ← Dieses Repository (Submodule)
+│   ├── dockerfile/
+│   │   ├── Dockerfile              # Master-Version
+│   │   └── DOCKER.md               # Master-Version
+│   ├── docker-compose.base.yml
+│   ├── docker-compose.dev.yml
+│   ├── docker-compose.staging.yml
+│   ├── docker-compose.prod.yml
+│   ├── deploy-prod.sh              # Deploy mit HAWK Image (Production)
+│   ├── deploy-staging.sh           # Deploy mit Custom Build (Staging)
+│   ├── deploy-dev.sh               # Deploy für Development (live code)
+│   ├── stop-*.sh                   # Stop-Skripte
+│   ├── update-dev.sh               # Quick update für dev
+│   ├── env/                        # Environment-Konfiguration
+│   ├── nginx/                      # Nginx-Konfiguration
+│   ├── storage/                    # Persistent storage
+│   ├── config/                     # Production config overrides
+│   ├── certs/                      # SSL certificates
+│   ├── SETUP.md                    # 📖 Submodule-Setup Anleitung
+│   └── README.md                   # Diese Datei
+└── ...
 ```
+
+## 🔄 Automatische Datei-Verwaltung
+
+Die Deployment-Skripte kopieren beim ersten Ausführen automatisch:
+- ✅ `dockerfile/Dockerfile` → `../Dockerfile`
+- ✅ `dockerfile/DOCKER.md` → `../DOCKER.md`
+
+**Keine manuellen Schritte nötig!** Siehe [`SETUP.md`](SETUP.md) für Details.
 
 ---
 
@@ -31,7 +50,7 @@ _docker_production/
 **Use Case**: Production servers using the official HAWK-provided Docker image
 
 ```bash
-cd _docker_production
+cd _docker
 ./deploy-prod.sh
 ```
 
@@ -60,7 +79,7 @@ cd _docker_production
 **Use Case**: Staging or test servers with your own code modifications
 
 ```bash
-cd _docker_production
+cd _docker
 ./deploy-staging.sh
 ```
 
@@ -92,7 +111,7 @@ cd _docker_production
 
 #### Initial Setup:
 ```bash
-cd _docker_production
+cd _docker
 ./deploy-dev.sh --build
 ```
 
@@ -109,7 +128,7 @@ This will:
 ```bash
 cd ~/HAWKI
 git pull  # or make local changes
-cd _docker_production
+cd _docker
 ./update-dev.sh  # ~10 seconds instead of 10 minutes!
 ```
 
@@ -235,7 +254,7 @@ HAWKI/                          ← Build context (root)
 ├── public/                     ← Static assets
 ├── package.json               ← NPM dependencies
 ├── composer.json              ← PHP dependencies
-└── _docker_production/
+└── _docker/
     ├── docker-compose.prod.yml     ← References ../Dockerfile
     └── deploy-staging.sh      ← cd .. && docker compose build
 ```
@@ -300,7 +319,7 @@ The correct way to stop containers depends on your deployment profile:
 
 ```bash
 # Development
-cd _docker_production
+cd _docker
 ./stop-dev.sh              # Stop containers (keep for quick restart)
 ./stop-dev.sh --remove     # Stop & remove containers
 ./stop-dev.sh --clean      # Clean everything including volumes
@@ -336,7 +355,7 @@ docker stop <container-name>
 ### Live Code Not Updating
 ```bash
 # Clear Laravel caches
-cd _docker_production
+cd _docker
 ./update-live.sh
 ```
 
@@ -384,7 +403,7 @@ NGINX_HTTP2_STYLE=new                          # HTTP2 style (new/old)
 If you need to regenerate the config manually:
 
 ```bash
-cd _docker_production
+cd _docker
 ./generate-nginx-config.sh
 ```
 

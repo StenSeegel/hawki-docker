@@ -4,6 +4,37 @@ set -e  # Exit on error
 echo "🚀 Starting HAWKI Development Deployment..."
 echo ""
 
+# =====================================================
+# Ensure Dockerfile exists in parent directory
+# =====================================================
+ensure_dockerfile_exists() {
+    local parent_dir="$(cd .. && pwd)"
+    local dockerfile_source="$(pwd)/dockerfile"
+    
+    if [ ! -f "$parent_dir/Dockerfile" ]; then
+        echo "📋 First-time setup: Copying Dockerfile to project root..."
+        
+        if [ ! -d "$dockerfile_source" ] || [ ! -f "$dockerfile_source/Dockerfile" ]; then
+            echo "❌ Error: dockerfile/Dockerfile not found in _docker directory!"
+            exit 1
+        fi
+        
+        cp "$dockerfile_source/Dockerfile" "$parent_dir/Dockerfile"
+        echo "✅ Dockerfile copied to $parent_dir/Dockerfile"
+        
+        # Also copy DOCKER.md if it exists (optional documentation)
+        if [ -f "$dockerfile_source/DOCKER.md" ]; then
+            cp "$dockerfile_source/DOCKER.md" "$parent_dir/DOCKER.md"
+            echo "✅ DOCKER.md copied to $parent_dir/DOCKER.md"
+        fi
+        
+        echo ""
+    fi
+}
+
+# Check and copy Dockerfile if needed
+ensure_dockerfile_exists
+
 # Stop any running staging/prod containers first (they use the same ports)
 if docker ps --format '{{.Names}}' | grep -qE '^hawki-(staging|prod)-'; then
     echo "⚠️  Detected running staging/prod containers. Stopping them first..."
@@ -13,8 +44,8 @@ if docker ps --format '{{.Names}}' | grep -qE '^hawki-(staging|prod)-'; then
     if docker ps --format '{{.Names}}' | grep -q '^hawki-staging-'; then
         echo "🛑 Stopping staging containers..."
         cd ..
-        docker compose -f _docker_production/docker-compose.staging.yml stop 2>/dev/null || true
-        cd _docker_production
+        docker compose -f _docker/docker-compose.staging.yml stop 2>/dev/null || true
+        cd _docker
         echo "✅ Staging containers stopped"
         echo ""
     fi
@@ -23,8 +54,8 @@ if docker ps --format '{{.Names}}' | grep -qE '^hawki-(staging|prod)-'; then
     if docker ps --format '{{.Names}}' | grep -q '^hawki-prod-'; then
         echo "🛑 Stopping prod containers..."
         cd ..
-        docker compose -f _docker_production/docker-compose.prod.yml stop 2>/dev/null || true
-        cd _docker_production
+        docker compose -f _docker/docker-compose.prod.yml stop 2>/dev/null || true
+        cd _docker
         echo "✅ Prod containers stopped"
         echo ""
     fi
@@ -127,14 +158,14 @@ if [ "$FORCE_BUILD" = true ]; then
         PROXY_ARGS=""
     fi
     
-    docker compose -f _docker_production/docker-compose.dev.yml build \
+    docker compose -f _docker/docker-compose.dev.yml build \
       $PROXY_ARGS \
       --pull app
     echo ""
 fi
 
 echo "🚢 Starting containers..."
-docker compose -f _docker_production/docker-compose.dev.yml up -d --remove-orphans
+docker compose -f _docker/docker-compose.dev.yml up -d --remove-orphans
 
 # Wait for containers to be ready
 echo "⏳ Waiting for containers to be ready..."
@@ -143,12 +174,12 @@ echo ""
 
 # Update Composer dependencies (WITH dev dependencies for development)
 echo "📦 Installing Composer dependencies..."
-docker compose -f _docker_production/docker-compose.dev.yml exec app composer install --optimize-autoloader
+docker compose -f _docker/docker-compose.dev.yml exec app composer install --optimize-autoloader
 echo ""
 
 # Build frontend with Docker environment variables
 echo "🎨 Building frontend assets..."
-cd _docker_production
+cd _docker
 ./build-frontend.sh dev
 cd ..
 echo ""
@@ -158,13 +189,13 @@ echo "💡 Frontend Development:"
 echo "   Frontend built with Docker environment (https://app.hawki.dev)"
 echo ""
 echo "   For live development with hot reload:"
-echo "   → cd _docker_production && ./build-frontend.sh dev"
+echo "   → cd _docker && ./build-frontend.sh dev"
 echo "   → npm run dev (on HOST)"
 echo ""
 
 # Run Laravel setup (without route:cache due to Laravel 12 bug)
 echo "⚙️  Running Laravel setup..."
-docker compose -f _docker_production/docker-compose.dev.yml exec app bash -c "php artisan migrate --force && \
+docker compose -f _docker/docker-compose.dev.yml exec app bash -c "php artisan migrate --force && \
     php artisan db:seed --force && \
     php artisan storage:link && \
     php artisan optimize:clear"
@@ -172,11 +203,11 @@ echo ""
 
 # Generate git info
 echo "📝 Generating Git info..."
-docker compose -f _docker_production/docker-compose.dev.yml exec app bash -c "git config --global --add safe.directory /var/www/html && /var/www/html/git_info.sh" 2>/dev/null || true
+docker compose -f _docker/docker-compose.dev.yml exec app bash -c "git config --global --add safe.directory /var/www/html && /var/www/html/git_info.sh" 2>/dev/null || true
 echo ""
 
 # Display success message
-cd _docker_production
+cd _docker
 APP_URL=${APP_URL:-https://app.hawki.dev}
 
 echo "═══════════════════════════════════════════════════════"

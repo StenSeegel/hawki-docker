@@ -97,7 +97,7 @@ The deploy scripts (`deploy-dev.sh`, `deploy-staging.sh`, `deploy-prod.sh`) auto
 
 Example:
 ```bash
-cd ../_docker_production
+cd ../_docker
 ./deploy-staging.sh --init
 ```
 
