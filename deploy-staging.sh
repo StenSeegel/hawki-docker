@@ -84,7 +84,7 @@ if docker ps --format '{{.Names}}' | grep -qE '^hawki-(dev|prod)-'; then
     if docker ps --format '{{.Names}}' | grep -q '^hawki-dev-'; then
         echo "🛑 Stopping dev containers..."
         cd ..
-        docker compose -f _docker/docker-compose.dev.yml stop 2>/dev/null || true
+        docker compose -f _docker/compose/docker-compose.dev.yml stop 2>/dev/null || true
         cd _docker
         echo "✅ Dev containers stopped"
         echo ""
@@ -94,7 +94,7 @@ if docker ps --format '{{.Names}}' | grep -qE '^hawki-(dev|prod)-'; then
     if docker ps --format '{{.Names}}' | grep -q '^hawki-prod-'; then
         echo "🛑 Stopping prod containers..."
         cd ..
-        docker compose -f _docker/docker-compose.prod.yml stop 2>/dev/null || true
+        docker compose -f _docker/compose/docker-compose.prod.yml stop 2>/dev/null || true
         cd _docker
         echo "✅ Prod containers stopped"
         echo ""
@@ -235,7 +235,7 @@ if [ "$FORCE_BUILD" = true ]; then
     
     # Stop containers first to release volume locks (but keep volumes!)
     echo "🛑 Stopping existing containers..."
-    docker compose -f _docker/docker-compose.staging.yml stop
+    docker compose -f _docker/compose/docker-compose.staging.yml stop
     
     # ONLY remove staging_build volume (NOT staging_public with user uploads!)
     echo "🗑️  Removing old build assets volume (preserving database & user uploads)..."
@@ -244,7 +244,7 @@ if [ "$FORCE_BUILD" = true ]; then
         docker volume rm "$VOLUME_NAME" || {
             echo "⚠️  Could not remove volume $VOLUME_NAME (might still be in use)"
             echo "   Removing containers completely..."
-            docker compose -f _docker/docker-compose.staging.yml down
+            docker compose -f _docker/compose/docker-compose.staging.yml down
             docker volume rm "$VOLUME_NAME" 2>/dev/null || true
         }
     else
@@ -255,7 +255,7 @@ if [ "$FORCE_BUILD" = true ]; then
     CACHEBUST=$(date +%s)
     echo "🔄 Cache bust: $CACHEBUST"
     
-    docker compose -f _docker/docker-compose.staging.yml build \
+    docker compose -f _docker/compose/docker-compose.staging.yml build \
       --pull \
       --build-arg CACHEBUST=$CACHEBUST \
       app
@@ -271,7 +271,7 @@ fi
 
 echo "🚢 Starting containers..."
 # Don't use --build here, we already built above!
-docker compose -f _docker/docker-compose.staging.yml up -d --remove-orphans
+docker compose -f _docker/compose/docker-compose.staging.yml up -d --remove-orphans
 
 # Wait for containers to be ready
 echo "⏳ Waiting for containers to be ready..."
@@ -280,7 +280,7 @@ echo ""
 
 # Run Laravel setup (without route:cache due to Laravel 12 bug)
 echo "⚙️  Running Laravel setup..."
-docker compose -f _docker/docker-compose.staging.yml exec app bash -c "\
+docker compose -f _docker/compose/docker-compose.staging.yml exec app bash -c "\
     php artisan migrate --force && \
     php artisan db:seed --force && \
     php artisan storage:link && \
@@ -291,7 +291,7 @@ echo ""
 
 # Fix storage permissions inside container
 echo "🔒 Setting storage permissions inside container..."
-docker compose -f _docker/docker-compose.staging.yml exec app bash -c "\
+docker compose -f _docker/compose/docker-compose.staging.yml exec app bash -c "\
     chmod -R 775 storage && \
     chmod -R 775 storage/logs && \
     chown -R www-data:www-data storage"
@@ -299,7 +299,7 @@ echo ""
 
 # Generate git info
 echo "📝 Generating Git info..."
-docker compose -f _docker/docker-compose.staging.yml exec app bash -c "\
+docker compose -f _docker/compose/docker-compose.staging.yml exec app bash -c "\
     git config --global --add safe.directory /var/www/html && \
     /var/www/html/git_info.sh" 2>/dev/null || true
 echo ""

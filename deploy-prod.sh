@@ -147,14 +147,14 @@ if [ -z "$VITE_REVERB_APP_KEY" ]; then
 fi
 
 echo "🔨 Building app image..."
-docker compose -f _docker/docker-compose.prod.yml build \
+docker compose -f _docker/compose/docker-compose.prod.yml build \
   --no-cache --pull app
 
 echo "🚢 Starting containers..."
-docker compose -f _docker/docker-compose.prod.yml up -d --force-recreate --remove-orphans
+docker compose -f _docker/compose/docker-compose.prod.yml up -d --force-recreate --remove-orphans
 
 echo "⚙️  Running Laravel optimizations..."
-docker compose -f _docker/docker-compose.prod.yml exec app bash -c "php artisan migrate --force && \
+docker compose -f _docker/compose/docker-compose.prod.yml exec app bash -c "php artisan migrate --force && \
     php artisan db:seed --force && \
     php artisan config:cache && \
     php artisan route:cache && \
@@ -162,7 +162,7 @@ docker compose -f _docker/docker-compose.prod.yml exec app bash -c "php artisan 
     php artisan optimize:clear"
 
 echo "📝 Generating Git info..."
-docker compose -f _docker/docker-compose.prod.yml exec app bash -c "echo '[]' > /var/www/html/storage/app/test_users.json && git config --global --add safe.directory /var/www/html && /var/www/html/git_info.sh"
+docker compose -f _docker/compose/docker-compose.prod.yml exec app bash -c "echo '[]' > /var/www/html/storage/app/test_users.json && git config --global --add safe.directory /var/www/html && /var/www/html/git_info.sh"
 
 # Get APP_URL from .env file
 cd _docker

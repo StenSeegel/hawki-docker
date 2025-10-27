@@ -66,7 +66,7 @@ if docker ps --format '{{.Names}}' | grep -qE '^hawki-(staging|prod)-'; then
     if docker ps --format '{{.Names}}' | grep -q '^hawki-staging-'; then
         echo "🛑 Stopping staging containers..."
         cd ..
-        docker compose -f _docker/docker-compose.staging.yml down 2>/dev/null || true
+        docker compose -f _docker/compose/docker-compose.staging.yml down 2>/dev/null || true
         cd _docker
         echo "✅ Staging containers stopped"
         echo ""
@@ -76,7 +76,7 @@ if docker ps --format '{{.Names}}' | grep -qE '^hawki-(staging|prod)-'; then
     if docker ps --format '{{.Names}}' | grep -q '^hawki-prod-'; then
         echo "🛑 Stopping prod containers..."
         cd ..
-        docker compose -f _docker/docker-compose.prod.yml down 2>/dev/null || true
+        docker compose -f _docker/compose/docker-compose.prod.yml down 2>/dev/null || true
         cd _docker
         echo "✅ Prod containers stopped"
         echo ""
@@ -190,14 +190,14 @@ if [ "$FORCE_BUILD" = true ]; then
         PROXY_ARGS=""
     fi
     
-    docker compose -f _docker/docker-compose.dev.yml build \
+    docker compose -f _docker/compose/docker-compose.dev.yml build \
       $PROXY_ARGS \
       --pull app
     echo ""
 fi
 
 echo "🚢 Starting containers..."
-docker compose -f _docker/docker-compose.dev.yml up -d --remove-orphans
+docker compose -f _docker/compose/docker-compose.dev.yml up -d --remove-orphans
 
 # Wait for containers to be ready
 echo "⏳ Waiting for containers to be ready..."
@@ -206,7 +206,7 @@ echo ""
 
 # Update Composer dependencies (WITH dev dependencies for development)
 echo "📦 Installing Composer dependencies..."
-docker compose -f _docker/docker-compose.dev.yml exec app composer install --optimize-autoloader
+docker compose -f _docker/compose/docker-compose.dev.yml exec app composer install --optimize-autoloader
 echo ""
 
 # Build frontend with Docker environment variables
@@ -227,7 +227,7 @@ echo ""
 
 # Run Laravel setup (without route:cache due to Laravel 12 bug)
 echo "⚙️  Running Laravel setup..."
-docker compose -f _docker/docker-compose.dev.yml exec app bash -c "php artisan migrate --force && \
+docker compose -f _docker/compose/docker-compose.dev.yml exec app bash -c "php artisan migrate --force && \
     php artisan db:seed --force && \
     php artisan storage:link && \
     php artisan optimize:clear"
@@ -235,7 +235,7 @@ echo ""
 
 # Generate git info
 echo "📝 Generating Git info..."
-docker compose -f _docker/docker-compose.dev.yml exec app bash -c "git config --global --add safe.directory /var/www/html && /var/www/html/git_info.sh" 2>/dev/null || true
+docker compose -f _docker/compose/docker-compose.dev.yml exec app bash -c "git config --global --add safe.directory /var/www/html && /var/www/html/git_info.sh" 2>/dev/null || true
 echo ""
 
 # Display success message

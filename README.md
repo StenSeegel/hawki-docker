@@ -14,10 +14,10 @@ HAWKI/                              # Hauptprojekt-Root
 │   ├── dockerfile/
 │   │   ├── Dockerfile              # Master-Version
 │   │   └── DOCKER.md               # Master-Version
-│   ├── docker-compose.base.yml
-│   ├── docker-compose.dev.yml
-│   ├── docker-compose.staging.yml
-│   ├── docker-compose.prod.yml
+│   ├── compose/docker-compose.base.yml
+│   ├── compose/docker-compose.dev.yml
+│   ├── compose/docker-compose.staging.yml
+│   ├── compose/docker-compose.prod.yml
 │   ├── deploy-prod.sh              # Deploy mit HAWK Image (Production)
 │   ├── deploy-staging.sh           # Deploy mit Custom Build (Staging)
 │   ├── deploy-dev.sh               # Deploy für Development (live code)
@@ -255,7 +255,7 @@ HAWKI/                          ← Build context (root)
 ├── package.json               ← NPM dependencies
 ├── composer.json              ← PHP dependencies
 └── _docker/
-    ├── docker-compose.prod.yml     ← References ../Dockerfile
+    ├── compose/docker-compose.prod.yml     ← References ../Dockerfile
     └── deploy-staging.sh      ← cd .. && docker compose build
 ```
 
@@ -263,14 +263,14 @@ HAWKI/                          ← Build context (root)
 
 ## 🔧 Configuration Files
 
-### docker-compose.prod.yml (Production & Custom Build)
+### compose/docker-compose.prod.yml (Production & Custom Build)
 - Uses `build: context: .. / dockerfile: Dockerfile`
 - Code is **inside** the Docker image
 - Mounts only: storage, config overrides
 - Target: `app_prod` (optimized, no dev tools)
 - Used by: `deploy-prod.sh` (pull image) & `deploy-staging.sh` (build image)
 
-### docker-compose.dev.yml (Development)
+### compose/docker-compose.dev.yml (Development)
 - Uses same build context
 - Code is **live-mounted**: `- ..:/var/www/html`
 - Mounts: entire repository + storage overrides
@@ -452,6 +452,6 @@ NGINX_ENABLE_IPV6=true
 ## 🆘 Support
 
 For issues or questions:
-- Check logs: `docker compose -f docker-compose.prod.yml logs -f app`
-- Inspect containers: `docker compose -f docker-compose.prod.yml ps`
-- Access container: `docker compose -f docker-compose.prod.yml exec app bash`
+- Check logs: `docker compose -f compose/docker-compose.prod.yml logs -f app`
+- Inspect containers: `docker compose -f compose/docker-compose.prod.yml ps`
+- Access container: `docker compose -f compose/docker-compose.prod.yml exec app bash`
