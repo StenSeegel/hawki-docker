@@ -11,13 +11,35 @@ ensure_dockerfile_exists() {
     local parent_dir="$(cd .. && pwd)"
     local dockerfile_source="$(pwd)/dockerfile"
     
-    if [ ! -f "$parent_dir/Dockerfile" ]; then
-        echo "📋 First-time setup: Copying Dockerfile to project root..."
-        
-        if [ ! -d "$dockerfile_source" ] || [ ! -f "$dockerfile_source/Dockerfile" ]; then
-            echo "❌ Error: dockerfile/Dockerfile not found in _docker directory!"
-            exit 1
+    if [ ! -d "$dockerfile_source" ] || [ ! -f "$dockerfile_source/Dockerfile" ]; then
+        echo "❌ Error: dockerfile/Dockerfile not found in _docker directory!"
+        exit 1
+    fi
+    
+    if [ -f "$parent_dir/Dockerfile" ]; then
+        # Check if files are different
+        if ! cmp -s "$dockerfile_source/Dockerfile" "$parent_dir/Dockerfile"; then
+            echo "⚠️  Dockerfile already exists in project root but differs from submodule version."
+            echo ""
+            read -p "Do you want to overwrite it with the version from _docker/dockerfile/? (yes/no): " -r
+            echo
+            if [[ $REPLY =~ ^[Yy][Ee][Ss]$ ]]; then
+                cp "$dockerfile_source/Dockerfile" "$parent_dir/Dockerfile"
+                echo "✅ Dockerfile updated from submodule"
+                
+                # Also update DOCKER.md if it exists
+                if [ -f "$dockerfile_source/DOCKER.md" ]; then
+                    cp "$dockerfile_source/DOCKER.md" "$parent_dir/DOCKER.md"
+                    echo "✅ DOCKER.md updated from submodule"
+                fi
+                echo ""
+            else
+                echo "ℹ️  Keeping existing Dockerfile in project root"
+                echo ""
+            fi
         fi
+    else
+        echo "📋 First-time setup: Copying Dockerfile to project root..."
         
         cp "$dockerfile_source/Dockerfile" "$parent_dir/Dockerfile"
         echo "✅ Dockerfile copied to $parent_dir/Dockerfile"
