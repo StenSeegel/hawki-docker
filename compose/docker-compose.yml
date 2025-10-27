@@ -22,7 +22,7 @@ services:
         container_name: ${PROJECT_NAME}-app
         image: ${PROJECT_HAWKI_IMAGE}
         build:
-            context: ..
+            context: ../..
             dockerfile: Dockerfile
             target: ${BUILD_TARGET:-app_prod}
             args:

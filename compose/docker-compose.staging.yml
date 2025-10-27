@@ -16,7 +16,7 @@ services:
         container_name: ${PROJECT_NAME}-app
         image: ${PROJECT_HAWKI_IMAGE}
         build:
-            context: ..
+            context: ../..
             dockerfile: Dockerfile
             target: app_staging  # Use staging target - code in image + debug capabilities
             args:
