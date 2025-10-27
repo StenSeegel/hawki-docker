@@ -66,7 +66,7 @@ if docker ps --format '{{.Names}}' | grep -qE '^hawki-(staging|prod)-'; then
     if docker ps --format '{{.Names}}' | grep -q '^hawki-staging-'; then
         echo "🛑 Stopping staging containers..."
         cd ..
-        docker compose -f _docker/docker-compose.staging.yml stop 2>/dev/null || true
+        docker compose -f _docker/docker-compose.staging.yml down 2>/dev/null || true
         cd _docker
         echo "✅ Staging containers stopped"
         echo ""
@@ -76,12 +76,17 @@ if docker ps --format '{{.Names}}' | grep -qE '^hawki-(staging|prod)-'; then
     if docker ps --format '{{.Names}}' | grep -q '^hawki-prod-'; then
         echo "🛑 Stopping prod containers..."
         cd ..
-        docker compose -f _docker/docker-compose.prod.yml stop 2>/dev/null || true
+        docker compose -f _docker/docker-compose.prod.yml down 2>/dev/null || true
         cd _docker
         echo "✅ Prod containers stopped"
         echo ""
     fi
 fi
+
+# Clean up any orphaned containers from previous runs
+echo "🧹 Cleaning up any orphaned containers..."
+docker ps -a --filter "name=hawki-${DEPLOY_PROFILE:-dev}-" --format '{{.Names}}' | xargs -r docker rm -f 2>/dev/null || true
+echo ""
 
 # Parse arguments
 FORCE_BUILD=false
@@ -168,6 +173,11 @@ fi
 
 # Build from parent directory (where Dockerfile is located)
 cd ..
+
+# Clean up any existing containers with the same names to avoid conflicts
+echo "🧹 Cleaning up any existing dev containers..."
+docker ps -a --filter "name=hawki-dev-" --format '{{.Names}}' | xargs -r docker rm -f 2>/dev/null || true
+echo ""
 
 if [ "$FORCE_BUILD" = true ]; then
     echo "🔨 Building Docker images..."
