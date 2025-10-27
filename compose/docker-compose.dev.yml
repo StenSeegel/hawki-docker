@@ -55,7 +55,7 @@ services:
         volumes:
             - ../..:/var/www/html:rw
             - ../env/.env:/var/www/html/.env
-            - ../config/model_providers.php:/var/www/htm../config/model_providers.php:ro
+            - ../config/model_providers.php:/var/www/html/config/model_providers.php:ro
         env_file:
             - ../env/.env
         environment:
@@ -77,7 +77,7 @@ services:
         volumes:
             - ../..:/var/www/html:rw
             - ../env/.env:/var/www/html/.env
-            - ../config/model_providers.php:/var/www/htm../config/model_providers.php:ro
+            - ../config/model_providers.php:/var/www/html/config/model_providers.php:ro
         env_file:
             - ../env/.env
         command: [ 'php', 'artisan', 'reverb:start' ]
@@ -95,7 +95,7 @@ services:
         volumes:
             - ../..:/var/www/html:rw
             - ../env/.env:/var/www/html/.env
-            - ../config/model_providers.php:/var/www/htm../config/model_providers.php:ro
+            - ../config/model_providers.php:/var/www/html/config/model_providers.php:ro
         env_file:
             - ../env/.env
         command: [ 'php', 'artisan', 'schedule:work' ]
@@ -123,12 +123,12 @@ services:
         container_name: ${PROJECT_NAME}-nginx
         image: nginx:1.27-alpine
         volumes:
-            - ./certs:/et../nginx/certs
-            - ../nginx/nginx.default.conf:/et../nginx/nginx.conf:ro
+            - ../certs:/etc/nginx/certs
+            - ../nginx/nginx.default.conf:/etc/nginx/nginx.conf:ro
             # Live public directory
-            - ../public:/var/www/html/public:ro
+            - ../../public:/var/www/html/public:ro
             # Storage for uploads (from main project)
-            - .../storage/app/public:/var/www/html/storage:ro
+            - ../storage/app/public:/var/www/html/storage:ro
         ports:
             - ${DOCKER_PROJECT_IP:-0.0.0.0}:80:8080
             - ${DOCKER_PROJECT_IP:-0.0.0.0}:443:8443
