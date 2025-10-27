@@ -39,14 +39,14 @@ services:
               bind:
                 create_host_path: true
             # Environment file (for artisan commands)
-            - ${ENV_PATH:-./env/.env}:/var/www/html/.env
+            - ${ENV_PATH:-../env/.env}:/var/www/html/.env
             # Storage directory
-            - ./storage/:/var/www/html/storage
+            - ../storage/:/var/www/html/storage
             # Bootstrap cache (writable, separate from code)
             - bootstrap_cache:/var/www/html/bootstrap/cache
             # Config overrides
-            - ./config/model_providers.php:/var/www/html/config/model_providers.php:ro
-            - ./config/model_lists:/var/www/html/config/model_lists:ro
+            - ../config/model_providers.php:/var/www/htm../config/model_providers.php:ro
+            - ../config/model_lists:/var/www/htm../config/model_lists:ro
         healthcheck:
             test: cgi-fcgi -bind -connect 127.0.0.1:9000 || exit 1
             interval: 10s
@@ -54,7 +54,7 @@ services:
             retries: 3
             start_period: 30s
         env_file:
-            - ${ENV_PATH:-./env/.env}
+            - ${ENV_PATH:-../env/.env}
         environment:
             REVERB_HOST: ${APP_URL}
         depends_on:
@@ -71,11 +71,11 @@ services:
         profiles: ["dev", "staging", "prod"]
         volumes:
             - ${CODE_MOUNT:-/dev/null}:/var/www/html:${CODE_MOUNT_MODE:-ro}
-            - ${ENV_PATH:-./env/.env}:/var/www/html/.env
-            - ./storage/:/var/www/html/storage
-            - ./config/model_providers.php:/var/www/html/config/model_providers.php:ro
+            - ${ENV_PATH:-../env/.env}:/var/www/html/.env
+            - ../storage/:/var/www/html/storage
+            - ../config/model_providers.php:/var/www/htm../config/model_providers.php:ro
         env_file:
-            - ${ENV_PATH:-./env/.env}
+            - ${ENV_PATH:-../env/.env}
         environment:
             REVERB_HOST: reverb
         command: [ 'php', 'artisan', 'queue:work', '--queue=default,mails,message_broadcast', '--tries=3', '--timeout=90' ]
@@ -93,11 +93,11 @@ services:
         profiles: ["dev", "staging", "prod"]
         volumes:
             - ${CODE_MOUNT:-/dev/null}:/var/www/html:${CODE_MOUNT_MODE:-ro}
-            - ${ENV_PATH:-./env/.env}:/var/www/html/.env
-            - ./storage/:/var/www/html/storage
-            - ./config/model_providers.php:/var/www/html/config/model_providers.php:ro
+            - ${ENV_PATH:-../env/.env}:/var/www/html/.env
+            - ../storage/:/var/www/html/storage
+            - ../config/model_providers.php:/var/www/htm../config/model_providers.php:ro
         env_file:
-            - ${ENV_PATH:-./env/.env}
+            - ${ENV_PATH:-../env/.env}
         command: [ 'php', 'artisan', 'reverb:start' ]
         depends_on:
             mysql:
@@ -113,11 +113,11 @@ services:
         profiles: ["dev", "staging", "prod"]
         volumes:
             - ${CODE_MOUNT:-/dev/null}:/var/www/html:${CODE_MOUNT_MODE:-ro}
-            - ${ENV_PATH:-./env/.env}:/var/www/html/.env
-            - ./storage/:/var/www/html/storage
-            - ./config/model_providers.php:/var/www/html/config/model_providers.php:ro
+            - ${ENV_PATH:-../env/.env}:/var/www/html/.env
+            - ../storage/:/var/www/html/storage
+            - ../config/model_providers.php:/var/www/htm../config/model_providers.php:ro
         env_file:
-            - ${ENV_PATH:-./env/.env}
+            - ${ENV_PATH:-../env/.env}
         command: [ 'php', 'artisan', 'schedule:work' ]
         depends_on:
             mysql:
@@ -215,11 +215,11 @@ services:
         image: nginx:1.27-alpine
         profiles: ["dev", "staging", "prod"]
         volumes:
-            - ./certs:/etc/nginx/certs
-            - ./nginx/nginx.default.conf:/etc/nginx/nginx.conf:ro
+            - ./certs:/et../nginx/certs
+            - ../nginx/nginx.default.conf:/et../nginx/nginx.conf:ro
             # Dev/Staging: live public directory
             - ${PUBLIC_MOUNT:-../public}:/var/www/html/public:ro
-            - ./storage/app/public:/var/www/html/storage:ro
+            - ../storage/app/public:/var/www/html/storage:ro
         ports:
             - ${DOCKER_PROJECT_IP:-0.0.0.0}:80:80
             - ${DOCKER_PROJECT_IP:-0.0.0.0}:443:443

@@ -35,15 +35,15 @@ services:
         volumes:
             # NO code mount - code is in the image
             # Only mount external files/directories
-            - ./env/.env:/var/www/html/.env:ro
+            - ../env/.env:/var/www/html/.env:ro
             # Mount entire storage directory from host (simpler, no volume conflicts)
             - ./storage:/var/www/html/storage
             # Mount public first, then override build subdirectory
             - staging_public:/var/www/html/public
             - staging_build:/var/www/html/public/build
             # Mount config files
-            - ./config/model_providers.php:/var/www/html/config/model_providers.php:ro
-            - ./config/model_lists:/var/www/html/config/model_lists:ro
+            - ../config/model_providers.php:/var/www/htm../config/model_providers.php:ro
+            - ../config/model_lists:/var/www/htm../config/model_lists:ro
         healthcheck:
             test: cgi-fcgi -bind -connect 127.0.0.1:9000 || exit 1
             interval: 10s
@@ -51,7 +51,7 @@ services:
             retries: 3
             start_period: 30s
         env_file:
-            - ./env/.env
+            - ../env/.env
         environment:
             REVERB_HOST: ${APP_URL}
         depends_on:
@@ -66,11 +66,11 @@ services:
         image: ${PROJECT_HAWKI_IMAGE}
         restart: always
         volumes:
-            - ./env/.env:/var/www/html/.env:ro
+            - ../env/.env:/var/www/html/.env:ro
             - ./storage:/var/www/html/storage
-            - ./config/model_providers.php:/var/www/html/config/model_providers.php:ro
+            - ../config/model_providers.php:/var/www/htm../config/model_providers.php:ro
         env_file:
-            - ./env/.env
+            - ../env/.env
         environment:
             REVERB_HOST: reverb
             REVERB_PORT: 8080
@@ -88,11 +88,11 @@ services:
         image: ${PROJECT_HAWKI_IMAGE}
         restart: always
         volumes:
-            - ./env/.env:/var/www/html/.env:ro
+            - ../env/.env:/var/www/html/.env:ro
             - ./storage:/var/www/html/storage
-            - ./config/model_providers.php:/var/www/html/config/model_providers.php:ro
+            - ../config/model_providers.php:/var/www/htm../config/model_providers.php:ro
         env_file:
-            - ./env/.env
+            - ../env/.env
         command: [ 'php', 'artisan', 'reverb:start' ]
         depends_on:
             mysql:
@@ -106,11 +106,11 @@ services:
         image: ${PROJECT_HAWKI_IMAGE}
         restart: always
         volumes:
-            - ./env/.env:/var/www/html/.env:ro
+            - ../env/.env:/var/www/html/.env:ro
             - ./storage:/var/www/html/storage
-            - ./config/model_providers.php:/var/www/html/config/model_providers.php:ro
+            - ../config/model_providers.php:/var/www/htm../config/model_providers.php:ro
         env_file:
-            - ./env/.env
+            - ../env/.env
         command: [ 'php', 'artisan', 'schedule:work' ]
         depends_on:
             mysql:
@@ -126,10 +126,10 @@ services:
         image: nginx:1.27-alpine
         restart: always
         volumes:
-            - ./certs:/etc/nginx/certs
-            - ./nginx/nginx.default.conf:/etc/nginx/nginx.conf:ro
+            - ./certs:/et../nginx/certs
+            - ../nginx/nginx.default.conf:/et../nginx/nginx.conf:ro
             # Mount storage from host for uploads (read-only for nginx)
-            - ./storage/app/public:/var/www/html/storage:ro
+            - ../storage/app/public:/var/www/html/storage:ro
             # Share build assets with app container
             - staging_build:/var/www/html/public/build:ro
             # Mount the rest of public/ from a shared volume with app
@@ -155,7 +155,7 @@ services:
         platform: linux/amd64
         restart: always
         env_file:
-            - ./env/.env
+            - ../env/.env
         environment:
             - F_API_KEY=${HAWKI_FILE_CONVERTER_API_KEY:-}
         healthcheck:
@@ -173,7 +173,7 @@ services:
         image: redis:latest
         restart: always
         env_file:
-            - ./env/.env
+            - ../env/.env
         volumes:
             - redis_data:/root/redis
         environment:
@@ -191,7 +191,7 @@ services:
             - --default-authentication-plugin=mysql_native_password
             - --max_connections=2000
         env_file:
-            - ./env/.env
+            - ../env/.env
         environment:
             MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-password}
             MYSQL_DATABASE: ${DB_DATABASE:-hawki}

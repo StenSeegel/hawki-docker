@@ -27,10 +27,10 @@ services:
             # Live code mount for development
             - ..:/var/www/html:rw
             # Environment file
-            - ./env/.env:/var/www/html/.env
+            - ../env/.env:/var/www/html/.env
             # Config overrides
-            - ./config/model_providers.php:/var/www/html/config/model_providers.php:ro
-            - ./config/model_lists:/var/www/html/config/model_lists:ro
+            - ../config/model_providers.php:/var/www/htm../config/model_providers.php:ro
+            - ../config/model_lists:/var/www/htm../config/model_lists:ro
         healthcheck:
             test: cgi-fcgi -bind -connect 127.0.0.1:9000 || exit 1
             interval: 10s
@@ -38,7 +38,7 @@ services:
             retries: 3
             start_period: 30s
         env_file:
-            - ./env/.env
+            - ../env/.env
         environment:
             REVERB_HOST: ${APP_URL}
         depends_on:
@@ -54,10 +54,10 @@ services:
         restart: always
         volumes:
             - ..:/var/www/html:rw
-            - ./env/.env:/var/www/html/.env
-            - ./config/model_providers.php:/var/www/html/config/model_providers.php:ro
+            - ../env/.env:/var/www/html/.env
+            - ../config/model_providers.php:/var/www/htm../config/model_providers.php:ro
         env_file:
-            - ./env/.env
+            - ../env/.env
         environment:
             REVERB_HOST: reverb
             REVERB_PORT: 8080
@@ -76,10 +76,10 @@ services:
         restart: always
         volumes:
             - ..:/var/www/html:rw
-            - ./env/.env:/var/www/html/.env
-            - ./config/model_providers.php:/var/www/html/config/model_providers.php:ro
+            - ../env/.env:/var/www/html/.env
+            - ../config/model_providers.php:/var/www/htm../config/model_providers.php:ro
         env_file:
-            - ./env/.env
+            - ../env/.env
         command: [ 'php', 'artisan', 'reverb:start' ]
         depends_on:
             mysql:
@@ -94,10 +94,10 @@ services:
         restart: always
         volumes:
             - ..:/var/www/html:rw
-            - ./env/.env:/var/www/html/.env
-            - ./config/model_providers.php:/var/www/html/config/model_providers.php:ro
+            - ../env/.env:/var/www/html/.env
+            - ../config/model_providers.php:/var/www/htm../config/model_providers.php:ro
         env_file:
-            - ./env/.env
+            - ../env/.env
         command: [ 'php', 'artisan', 'schedule:work' ]
         depends_on:
             mysql:
@@ -123,12 +123,12 @@ services:
         container_name: ${PROJECT_NAME}-nginx
         image: nginx:1.27-alpine
         volumes:
-            - ./certs:/etc/nginx/certs
-            - ./nginx/nginx.default.conf:/etc/nginx/nginx.conf:ro
+            - ./certs:/et../nginx/certs
+            - ../nginx/nginx.default.conf:/et../nginx/nginx.conf:ro
             # Live public directory
             - ../public:/var/www/html/public:ro
             # Storage for uploads (from main project)
-            - ../storage/app/public:/var/www/html/storage:ro
+            - .../storage/app/public:/var/www/html/storage:ro
         ports:
             - ${DOCKER_PROJECT_IP:-0.0.0.0}:80:8080
             - ${DOCKER_PROJECT_IP:-0.0.0.0}:443:8443
@@ -150,7 +150,7 @@ services:
         platform: linux/amd64
         restart: always
         env_file:
-            - ./env/.env
+            - ../env/.env
         environment:
             - F_API_KEY=${HAWKI_FILE_CONVERTER_API_KEY:-}
         healthcheck:
@@ -169,7 +169,7 @@ services:
         image: redis:latest
         restart: always
         env_file:
-            - ./env/.env
+            - ../env/.env
         volumes:
             - redis_data:/root/redis
         environment:
@@ -187,7 +187,7 @@ services:
             - --default-authentication-plugin=mysql_native_password
             - --max_connections=2000
         env_file:
-            - ./env/.env
+            - ../env/.env
         environment:
             MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-password}
             MYSQL_DATABASE: ${DB_DATABASE:-hawki}
