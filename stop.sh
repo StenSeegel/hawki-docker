@@ -76,7 +76,10 @@ if [ -z "$PROFILE" ]; then
     exit 1
 fi
 
-echo "🛑 Stopping HAWKI ${PROFILE^^} Containers..."
+# Convert profile to uppercase for display
+PROFILE_UPPER=$(echo "$PROFILE" | tr '[:lower:]' '[:upper:]')
+
+echo "🛑 Stopping HAWKI ${PROFILE_UPPER} Containers..."
 echo ""
 
 # Stop containers
