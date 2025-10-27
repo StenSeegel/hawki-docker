@@ -154,7 +154,8 @@ services:
         environment:
             - F_API_KEY=${HAWKI_FILE_CONVERTER_API_KEY:-}
         healthcheck:
-            test: [ "CMD", "curl", "-f", "http://localhost:8001/" ]
+            # Use API key from environment for healthcheck
+            test: [ "CMD", "sh", "-c", "curl -f -H \"Authorization: Bearer $$F_API_KEY\" http://localhost:8001/" ]
             interval: 30s
             timeout: 10s
             retries: 3
