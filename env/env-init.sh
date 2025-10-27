@@ -372,21 +372,76 @@ if [ "$PROFILE" = "dev" ]; then
     CERTS_DIR="$DOCKER_DIR/certs"
     if [ ! -f "$CERTS_DIR/app.hawki.dev.crt" ]; then
         echo -e "${GREEN}   Generating SSL certificates...${NC}"
+        
+        # Create temporary OpenSSL config for SAN (Subject Alternative Name)
+        # Modern browsers (Chrome 58+) require SAN extension
+        cat > "$CERTS_DIR/openssl-san.cnf" << EOF
+[req]
+default_bits = 2048
+prompt = no
+default_md = sha256
+x509_extensions = v3_req
+distinguished_name = dn
+
+[dn]
+C = DE
+ST = Lower Saxony
+L = Hildesheim
+O = HAWKI Dev
+CN = app.hawki.dev
+
+[v3_req]
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = app.hawki.dev
+DNS.2 = localhost
+IP.1 = 127.0.0.1
+EOF
+        
         openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
             -keyout "$CERTS_DIR/app.hawki.dev.key" \
             -out "$CERTS_DIR/app.hawki.dev.crt" \
-            -subj "/C=DE/ST=Lower Saxony/L=Hildesheim/O=HAWKI Dev/CN=app.hawki.dev" \
+            -config "$CERTS_DIR/openssl-san.cnf" \
             > /dev/null 2>&1
+        
+        # Create config for db.hawki.dev
+        cat > "$CERTS_DIR/openssl-san-db.cnf" << EOF
+[req]
+default_bits = 2048
+prompt = no
+default_md = sha256
+x509_extensions = v3_req
+distinguished_name = dn
+
+[dn]
+C = DE
+ST = Lower Saxony
+L = Hildesheim
+O = HAWKI Dev
+CN = db.hawki.dev
+
+[v3_req]
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = db.hawki.dev
+DNS.2 = localhost
+IP.1 = 127.0.0.1
+EOF
         
         openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
             -keyout "$CERTS_DIR/db.hawki.dev.key" \
             -out "$CERTS_DIR/db.hawki.dev.crt" \
-            -subj "/C=DE/ST=Lower Saxony/L=Hildesheim/O=HAWKI Dev/CN=db.hawki.dev" \
+            -config "$CERTS_DIR/openssl-san-db.cnf" \
             > /dev/null 2>&1
         
-        # Create symlinks for default cert
-        ln -sf app.hawki.dev.crt "$CERTS_DIR/cert.pem"
-        ln -sf app.hawki.dev.key "$CERTS_DIR/key.pem"
+        # Clean up temporary config files
+        rm -f "$CERTS_DIR/openssl-san.cnf" "$CERTS_DIR/openssl-san-db.cnf"
+        
+        # Create COPIES (not symlinks) for default cert (Docker for Mac has issues with symlinks)
+        cp "$CERTS_DIR/app.hawki.dev.crt" "$CERTS_DIR/cert.pem"
+        cp "$CERTS_DIR/app.hawki.dev.key" "$CERTS_DIR/key.pem"
         
         echo -e "${GREEN}   ✓ SSL certificates generated${NC}"
         
