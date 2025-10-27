@@ -93,6 +93,16 @@ http {
             alias /var/www/html/storage;
         }
 
+        # Fix MIME types for JavaScript files in build directory
+        # This ensures PDF.js workers and other JS assets are served with correct MIME type
+        location ~* ^/build/.*\.(js|mjs)$ {
+            types {
+                application/javascript js mjs;
+            }
+            default_type application/javascript;
+            add_header Cache-Control "public, max-age=31536000, immutable";
+        }
+
         # Laravel Reverb
         # The Websocket Client/Laravel Echo would connect and listen to this
         # Note: The reverbkey can contain special characters like colons (e.g., base64:...)
