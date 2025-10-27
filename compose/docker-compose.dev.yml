@@ -25,12 +25,12 @@ services:
         restart: no
         volumes:
             # Live code mount for development
-            - ..:/var/www/html:rw
+            - ../..:/var/www/html:rw
             # Environment file
             - ../env/.env:/var/www/html/.env
             # Config overrides
-            - ../config/model_providers.php:/var/www/htm../config/model_providers.php:ro
-            - ../config/model_lists:/var/www/htm../config/model_lists:ro
+            - ../config/model_providers.php:/var/www/html/config/model_providers.php:ro
+            - ../config/model_lists:/var/www/html/config/model_lists:ro
         healthcheck:
             test: cgi-fcgi -bind -connect 127.0.0.1:9000 || exit 1
             interval: 10s
@@ -53,7 +53,7 @@ services:
         image: ${PROJECT_HAWKI_IMAGE}
         restart: always
         volumes:
-            - ..:/var/www/html:rw
+            - ../..:/var/www/html:rw
             - ../env/.env:/var/www/html/.env
             - ../config/model_providers.php:/var/www/htm../config/model_providers.php:ro
         env_file:
@@ -75,7 +75,7 @@ services:
         image: ${PROJECT_HAWKI_IMAGE}
         restart: always
         volumes:
-            - ..:/var/www/html:rw
+            - ../..:/var/www/html:rw
             - ../env/.env:/var/www/html/.env
             - ../config/model_providers.php:/var/www/htm../config/model_providers.php:ro
         env_file:
@@ -93,7 +93,7 @@ services:
         image: ${PROJECT_HAWKI_IMAGE}
         restart: always
         volumes:
-            - ..:/var/www/html:rw
+            - ../..:/var/www/html:rw
             - ../env/.env:/var/www/html/.env
             - ../config/model_providers.php:/var/www/htm../config/model_providers.php:ro
         env_file:
