@@ -41,8 +41,8 @@ services:
             # Share public directory with nginx via named volume
             - production_public:/var/www/html/public
             # Mount config files
-            - ../config/model_providers.php:/var/www/htm../config/model_providers.php:ro
-            - ../config/model_lists:/var/www/htm../config/model_lists:ro
+            - ../config/model_providers.php:/var/www/html/config/model_providers.php:ro
+            - ../config/model_lists:/var/www/html/config/model_lists:ro
         healthcheck:
             test: cgi-fcgi -bind -connect 127.0.0.1:9000 || exit 1
             interval: 10s
@@ -67,7 +67,7 @@ services:
         volumes:
             - ../env/.env:/var/www/html/.env:ro
             - ./storage:/var/www/html/storage
-            - ../config/model_providers.php:/var/www/htm../config/model_providers.php:ro
+            - ../config/model_providers.php:/var/www/html/config/model_providers.php:ro
         env_file:
             - ../env/.env
         environment:
@@ -89,7 +89,7 @@ services:
         volumes:
             - ../env/.env:/var/www/html/.env:ro
             - ./storage:/var/www/html/storage
-            - ../config/model_providers.php:/var/www/htm../config/model_providers.php:ro
+            - ../config/model_providers.php:/var/www/html/config/model_providers.php:ro
         env_file:
             - ../env/.env
         command: [ 'php', 'artisan', 'reverb:start' ]
@@ -107,7 +107,7 @@ services:
         volumes:
             - ../env/.env:/var/www/html/.env:ro
             - ./storage:/var/www/html/storage
-            - ../config/model_providers.php:/var/www/htm../config/model_providers.php:ro
+            - ../config/model_providers.php:/var/www/html/config/model_providers.php:ro
         env_file:
             - ../env/.env
         command: [ 'php', 'artisan', 'schedule:work' ]
@@ -123,8 +123,8 @@ services:
         image: nginx:1.27-alpine
         restart: always
         volumes:
-            - ./certs:/et../nginx/certs
-            - ../nginx/nginx.default.conf:/et../nginx/nginx.conf:ro
+            - ./certs:/etc/nginx/certs
+            - ../nginx/nginx.default.conf:/etc/nginx/nginx.conf:ro
             # Mount storage from host for uploads (read-only for nginx)
             - ../storage/app/public:/var/www/html/storage:ro
             # Share public directory with app container via named volume
