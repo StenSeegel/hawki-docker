@@ -5,18 +5,21 @@ set -e
 show_help() {
     echo "HAWKI Docker Stop Script"
     echo ""
-    echo "Usage: ./stop.sh --dev|--staging|--prod [--remove]"
+    echo "Usage: ./stop.sh [--dev|--staging|--prod|--auto] [--remove]"
     echo ""
     echo "Profiles:"
     echo "  --dev, --development   Stop development containers"
     echo "  --staging              Stop staging containers"
     echo "  --prod, --production   Stop production containers"
+    echo "  --auto                 Auto-detect running environment (default)"
     echo ""
     echo "Options:"
     echo "  --remove               Also remove build volumes (forces rebuild)"
     echo "  --help, -h             Show this help message"
     echo ""
     echo "Examples:"
+    echo "  ./stop.sh              # Auto-detect and stop"
+    echo "  ./stop.sh --auto       # Same as above"
     echo "  ./stop.sh --dev"
     echo "  ./stop.sh --staging --remove"
     echo "  ./stop.sh --prod"
@@ -27,6 +30,7 @@ show_help() {
 
 # Default values
 PROFILE=""
+AUTO_DETECT=true
 REMOVE_BUILD_VOLUMES=false
 
 # Parse arguments
@@ -35,14 +39,20 @@ for arg in "$@"; do
         --help|-h)
             show_help
             ;;
+        --auto)
+            AUTO_DETECT=true
+            ;;
         --dev|--development)
             PROFILE="dev"
+            AUTO_DETECT=false
             ;;
         --staging)
             PROFILE="staging"
+            AUTO_DETECT=false
             ;;
         --prod|--production)
             PROFILE="prod"
+            AUTO_DETECT=false
             ;;
         --remove)
             REMOVE_BUILD_VOLUMES=true
@@ -50,29 +60,45 @@ for arg in "$@"; do
         *)
             echo "❌ Unknown argument: $arg"
             echo ""
-            echo "Usage: ./stop.sh --dev|--staging|--prod [--remove]"
+            echo "Usage: ./stop.sh [--dev|--staging|--prod|--auto] [--remove]"
             echo ""
-            echo "Options:"
-            echo "  --dev          Stop development containers"
-            echo "  --staging      Stop staging containers"
-            echo "  --prod         Stop production containers"
-            echo "  --remove       Also remove build volumes (forces rebuild)"
-            echo "  --help, -h     Show help"
+            echo "Run './stop.sh --help' for more information"
             exit 1
             ;;
     esac
 done
 
+# Auto-detect profile if not specified
+if [ "$AUTO_DETECT" = true ]; then
+    echo "🔍 Auto-detecting running environment..."
+    
+    # Check for running containers
+    if docker ps --format '{{.Names}}' | grep -q '^hawki-dev-'; then
+        PROFILE="dev"
+        echo "✓ Detected: Development environment"
+    elif docker ps --format '{{.Names}}' | grep -q '^hawki-staging-'; then
+        PROFILE="staging"
+        echo "✓ Detected: Staging environment"
+    elif docker ps --format '{{.Names}}' | grep -q '^hawki-prod-'; then
+        PROFILE="prod"
+        echo "✓ Detected: Production environment"
+    else
+        echo "❌ No running HAWKI containers found!"
+        echo ""
+        echo "💡 You can specify the profile manually:"
+        echo "   ./stop.sh --dev"
+        echo "   ./stop.sh --staging"
+        echo "   ./stop.sh --prod"
+        exit 1
+    fi
+    echo ""
+fi
+
 # Check if profile is set
 if [ -z "$PROFILE" ]; then
-    echo "❌ Error: No profile specified!"
+    echo "❌ Error: No profile specified and auto-detection failed!"
     echo ""
-    echo "Usage: ./stop.sh --dev|--staging|--prod [--remove]"
-    echo ""
-    echo "Examples:"
-    echo "  ./stop.sh --dev"
-    echo "  ./stop.sh --staging --remove"
-    echo "  ./stop.sh --prod"
+    echo "Usage: ./stop.sh [--dev|--staging|--prod] [--remove]"
     exit 1
 fi
 
@@ -84,7 +110,7 @@ echo ""
 
 # Stop containers
 echo "⏸️  Stopping and removing containers..."
-docker compose -f "docker-compose.${PROFILE}.yml" --env-file env/.env down
+docker compose -f "compose/docker-compose.${PROFILE}.yml" --env-file env/.env down
 
 echo "✅ Containers stopped!"
 echo ""
@@ -115,10 +141,11 @@ fi
 
 echo "═══════════════════════════════════════════════════════"
 echo "📋 Quick Reference:"
+echo "   ./stop.sh                    # Auto-detect and stop"
 echo "   ./stop.sh --dev              # Stop development"
 echo "   ./stop.sh --staging          # Stop staging"
 echo "   ./stop.sh --prod             # Stop production"
-echo "   ./stop.sh --staging --remove # Stop + rebuild frontend"
+echo "   ./stop.sh --remove           # Auto-detect + remove builds"
 echo ""
 echo "⚠️  Database volumes are NEVER removed automatically!"
 echo "═══════════════════════════════════════════════════════"
