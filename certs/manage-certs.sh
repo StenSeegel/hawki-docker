@@ -21,14 +21,16 @@ show_help() {
     echo "Usage: ./manage-certs.sh [COMMAND]"
     echo ""
     echo "Commands:"
-    echo "  find        Find existing server certificates"
+    echo "  find        Find existing server certificates and private keys"
     echo "  copy        Copy certificates from another location"
+    echo "  import      Find and copy system certificates automatically"
     echo "  generate    Generate self-signed development certificates"
     echo "  help        Show this help message"
     echo ""
     echo "Examples:"
     echo "  ./manage-certs.sh find"
     echo "  ./manage-certs.sh copy /path/to/source/certs"
+    echo "  ./manage-certs.sh import hostname"
     echo "  ./manage-certs.sh generate app.hawki.dev"
     echo ""
     echo "═══════════════════════════════════════════════════════"
@@ -53,29 +55,70 @@ find_certs() {
         "$HOME/certs"
     )
     
-    echo "Checking common locations:"
+    # Common private key locations
+    KEY_LOCATIONS=(
+        "/etc/ssl/private"
+        "/etc/pki/tls/private"
+        "/etc/nginx/ssl"
+        "/etc/apache2/ssl"
+        "/usr/local/etc/nginx/ssl"
+    )
+    
+    echo "Checking common certificate locations:"
     for location in "${CERT_LOCATIONS[@]}"; do
         if [ -d "$location" ]; then
-            echo -e "${GREEN}✓${NC} $location"
-            cert_files=$(find "$location" -maxdepth 2 -type f \( -name "*.crt" -o -name "*.pem" -o -name "*.key" \) 2>/dev/null || true)
+            cert_files=$(find "$location" -maxdepth 2 -type f \( -name "*.crt" -o -name "*.pem" -o -name "*.cer" \) 2>/dev/null | head -20)
             if [ -n "$cert_files" ]; then
+                echo -e "${GREEN}✓${NC} $location"
                 echo "$cert_files" | while read -r file; do
-                    echo "  - $file"
+                    local filename=$(basename "$file")
+                    echo "  - $filename ($file)"
                 done
+            else
+                echo -e "${YELLOW}○${NC} $location (directory exists, no certificate files found)"
             fi
         else
-            echo -e "${YELLOW}○${NC} $location (not found)"
+            echo -e "${RED}✗${NC} $location (not found)"
+        fi
+    done
+    
+    echo ""
+    echo "Checking common private key locations:"
+    for location in "${KEY_LOCATIONS[@]}"; do
+        if [ -d "$location" ]; then
+            key_files=$(find "$location" -maxdepth 2 -type f \( -name "*.key" -o -name "*priv*.pem" \) 2>/dev/null | head -20)
+            if [ -n "$key_files" ]; then
+                echo -e "${GREEN}✓${NC} $location"
+                echo "$key_files" | while read -r file; do
+                    local filename=$(basename "$file")
+                    echo "  - $filename ($file)"
+                done
+            else
+                echo -e "${YELLOW}○${NC} $location (directory exists, no key files found)"
+            fi
+        else
+            echo -e "${RED}✗${NC} $location (not found)"
         fi
     done
     
     echo ""
     echo "Certificates in current directory ($SCRIPT_DIR):"
-    if ls "$SCRIPT_DIR"/*.{crt,pem,key} 2>/dev/null; then
-        echo ""
-    else
+    local found_files=false
+    for ext in crt pem key; do
+        while IFS= read -r -d '' file; do
+            if [ -f "$file" ]; then
+                local filename=$(basename "$file")
+                echo "  - $filename"
+                found_files=true
+            fi
+        done < <(find "$SCRIPT_DIR" -maxdepth 1 -name "*.$ext" -print0 2>/dev/null)
+    done
+    if [ "$found_files" = false ]; then
         echo -e "${YELLOW}  No certificates found${NC}"
     fi
     
+    echo ""
+    echo -e "${BLUE}💡 Tip: Use './manage-certs.sh import hostname' to automatically find and copy certificates${NC}"
     echo ""
 }
 
@@ -236,6 +279,108 @@ EOF
     fi
 }
 
+# Function to import system certificates
+import_system_certs() {
+    local hostname="$1"
+    
+    if [ -z "$hostname" ]; then
+        # Try to detect hostname
+        hostname=$(hostname -f 2>/dev/null || hostname 2>/dev/null || echo "")
+        if [ -z "$hostname" ]; then
+            echo -e "${YELLOW}⚠️  Could not detect hostname. Please specify manually.${NC}"
+            echo "Usage: ./manage-certs.sh import hostname"
+            exit 1
+        fi
+        echo -e "${BLUE}🔍 Detected hostname: $hostname${NC}"
+    fi
+    
+    echo ""
+    echo -e "${BLUE}🔍 Searching for certificates matching: $hostname${NC}"
+    echo ""
+    
+    # Search for certificate
+    local cert_file=""
+    local key_file=""
+    
+    # Common certificate patterns
+    local cert_patterns=(
+        "/etc/ssl/certs/${hostname}.pem"
+        "/etc/ssl/certs/${hostname}.crt"
+        "/etc/ssl/certs/${hostname%-*}.pem"
+        "/etc/pki/tls/certs/${hostname}.pem"
+        "/etc/pki/tls/certs/${hostname}.crt"
+    )
+    
+    # Common key patterns
+    local key_patterns=(
+        "/etc/ssl/private/${hostname}.key"
+        "/etc/ssl/private/${hostname%-*}.key"
+        "/etc/ssl/private/priv.pem"
+        "/etc/pki/tls/private/${hostname}.key"
+        "/etc/pki/tls/private/priv.pem"
+    )
+    
+    # Find certificate
+    for pattern in "${cert_patterns[@]}"; do
+        if [ -f "$pattern" ]; then
+            cert_file="$pattern"
+            local cert_name=$(basename "$cert_file")
+            echo -e "${GREEN}✓${NC} Found certificate: $cert_name"
+            echo -e "   Path: $cert_file"
+            break
+        fi
+    done
+    
+    # Find private key
+    for pattern in "${key_patterns[@]}"; do
+        if [ -f "$pattern" ]; then
+            key_file="$pattern"
+            local key_name=$(basename "$key_file")
+            echo -e "${GREEN}✓${NC} Found private key: $key_name"
+            echo -e "   Path: $key_file"
+            break
+        fi
+    done
+    
+    # Check if we found both files
+    if [ -z "$cert_file" ] || [ -z "$key_file" ]; then
+        echo ""
+        echo -e "${YELLOW}⚠️  Could not find matching certificate and/or private key${NC}"
+        echo ""
+        echo "Run './manage-certs.sh find' to see available certificates"
+        echo "Or use './manage-certs.sh copy /path/to/certs' to copy manually"
+        exit 1
+    fi
+    
+    echo ""
+    echo -e "${BLUE}📋 Copying certificates...${NC}"
+    echo ""
+    
+    # Copy certificate
+    cp "$cert_file" "$SCRIPT_DIR/cert.pem"
+    local cert_name=$(basename "$cert_file")
+    echo -e "${GREEN}✓${NC} Copied: $cert_name → cert.pem"
+    echo -e "   From: $cert_file"
+    
+    # Copy private key
+    cp "$key_file" "$SCRIPT_DIR/key.pem"
+    local key_name=$(basename "$key_file")
+    echo -e "${GREEN}✓${NC} Copied: $key_name → key.pem"
+    echo -e "   From: $key_file"
+    
+    # Set appropriate permissions
+    chmod 644 "$SCRIPT_DIR/cert.pem"
+    chmod 600 "$SCRIPT_DIR/key.pem"
+    
+    echo ""
+    echo -e "${GREEN}✅ Certificates imported successfully!${NC}"
+    echo ""
+    echo "Files created:"
+    echo "  - $SCRIPT_DIR/cert.pem (certificate)"
+    echo "  - $SCRIPT_DIR/key.pem (private key)"
+    echo ""
+}
+
 # Main script logic
 case "${1:-help}" in
     find)
@@ -243,6 +388,9 @@ case "${1:-help}" in
         ;;
     copy)
         copy_certs "$2"
+        ;;
+    import)
+        import_system_certs "$2"
         ;;
     generate)
         generate_dev_certs "$2"
