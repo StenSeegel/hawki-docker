@@ -172,16 +172,11 @@ services:
         container_name: ${PROJECT_NAME}-redis
         image: redis:latest
         restart: always
-        command: >
-            redis-server
-            --requirepass ${REDIS_PASSWORD:-password}
-            --user ${REDIS_USERNAME:-default} on >${REDIS_PASSWORD:-password} ~* &* +@all
         env_file:
             - ../env/.env
         volumes:
-            - redis_data:/data
+            - redis_data:/root/redis
         environment:
-            REDIS_USERNAME: ${REDIS_USERNAME:-default}
             REDIS_PASSWORD: ${REDIS_PASSWORD:-password}
             REDIS_PORT: ${REDIS_PORT:-6379}
             REDIS_DATABASES: 16
