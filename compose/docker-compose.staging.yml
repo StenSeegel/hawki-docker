@@ -218,12 +218,16 @@ services:
 # ====================================================
 volumes:
     mysql_data:
-        driver: local
+        name: hawki-staging_mysql_data
+        external: true
     redis_data:
-        driver: local
+        name: hawki-staging_redis_data
+        external: true
     staging_build:
+        name: hawki-staging_staging_build
         driver: local
     staging_public:
+        name: hawki-staging_staging_public
         driver: local
 
 
