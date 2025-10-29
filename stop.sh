@@ -121,16 +121,16 @@ if [ "$REMOVE_BUILD_VOLUMES" = true ]; then
     
     case $PROFILE in
         dev)
-            docker volume rm docker_production_dev_vendor 2>/dev/null || echo "   ℹ️  Volume docker_production_dev_vendor not found"
-            docker volume rm docker_production_dev_node_modules 2>/dev/null || echo "   ℹ️  Volume docker_production_dev_node_modules not found"
+            docker volume rm hawki-dev_dev_vendor 2>/dev/null || echo "   ℹ️  Volume hawki-dev_dev_vendor not found"
+            docker volume rm hawki-dev_dev_node_modules 2>/dev/null || echo "   ℹ️  Volume hawki-dev_dev_node_modules not found"
             ;;
         staging)
-            docker volume rm docker_production_staging_public 2>/dev/null || echo "   ℹ️  Volume docker_production_staging_public not found"
-            docker volume rm docker_production_staging_build 2>/dev/null || echo "   ℹ️  Volume docker_production_staging_build not found"
+            docker volume rm hawki-staging_staging_public 2>/dev/null || echo "   ℹ️  Volume hawki-staging_staging_public not found"
+            docker volume rm hawki-staging_staging_build 2>/dev/null || echo "   ℹ️  Volume hawki-staging_staging_build not found"
             ;;
         prod)
-            docker volume rm docker_production_prod_public 2>/dev/null || echo "   ℹ️  Volume docker_production_prod_public not found"
-            docker volume rm docker_production_prod_build 2>/dev/null || echo "   ℹ️  Volume docker_production_prod_build not found"
+            docker volume rm hawki-prod_prod_public 2>/dev/null || echo "   ℹ️  Volume hawki-prod_prod_public not found"
+            docker volume rm hawki-prod_prod_build 2>/dev/null || echo "   ℹ️  Volume hawki-prod_prod_build not found"
             ;;
     esac
     
