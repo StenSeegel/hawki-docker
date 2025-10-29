@@ -126,7 +126,7 @@ services:
         image: nginx:1.27-alpine
         restart: always
         volumes:
-            - ./certs:/etc/nginx/certs
+            - ../certs:/etc/nginx/certs
             - ../nginx/nginx.default.conf:/etc/nginx/nginx.conf:ro
             # Mount storage from host for uploads (read-only for nginx)
             - ../storage/app/public:/var/www/html/storage:ro
