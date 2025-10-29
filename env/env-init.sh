@@ -9,11 +9,13 @@
 #
 # Usage:
 #   ./env-init.sh [--profile=dev|staging|prod] [--non-interactive] [--force]
+#   ./env-init.sh --help
 #
 # Options:
 #   --profile=PROFILE       Environment profile (dev, staging, prod)
 #   --non-interactive       Run without prompts (use defaults)
 #   --force                 Overwrite existing .env file
+#   -h, --help             Display detailed help message
 # =====================================================
 
 set -e
@@ -42,6 +44,74 @@ sed_inplace() {
     fi
 }
 
+# Function to display help
+show_help() {
+    cat << EOF
+${BLUE}HAWKI Environment Initialization Script${NC}
+
+${YELLOW}DESCRIPTION:${NC}
+    Automatically generates .env file from .env.example + profile defaults
+    Generates missing encryption keys
+    Sets up SSL certificates for dev mode
+    Configures /etc/hosts for local domains (dev mode)
+
+${YELLOW}USAGE:${NC}
+    $0 [OPTIONS]
+
+${YELLOW}OPTIONS:${NC}
+    --profile=PROFILE       Environment profile to use
+                           Valid values: dev, staging, prod
+                           Default: dev
+
+    --non-interactive       Run without prompts (use defaults)
+                           Useful for automation and CI/CD
+
+    --force                 Overwrite existing .env file without prompt
+                           Default: prompt for confirmation
+
+    -h, --help             Display this help message and exit
+
+${YELLOW}EXAMPLES:${NC}
+    # Interactive dev setup (default)
+    $0
+
+    # Production setup with prompts
+    $0 --profile=prod
+
+    # Non-interactive staging setup
+    $0 --profile=staging --non-interactive
+
+    # Force overwrite existing .env for dev
+    $0 --profile=dev --force
+
+    # Display this help
+    $0 --help
+
+${YELLOW}PROFILES:${NC}
+    dev        Local development environment
+               - Fixed domain: app.hawki.dev
+               - Generates SSL certificates
+               - Configures /etc/hosts
+               - Sets user permissions (DOCKER_UID/GID)
+
+    staging    Staging environment
+               - Prompts for custom domain
+               - Prompts for proxy settings (optional)
+
+    prod       Production environment
+               - Prompts for custom domain
+               - Prompts for proxy settings (optional)
+
+${YELLOW}NOTES:${NC}
+    - All encryption keys are automatically generated if missing
+    - Dev profile requires sudo for /etc/hosts and keychain modifications
+    - Existing .env values are preserved unless --force is used
+    - Profile-specific configurations are merged from .env.<profile>
+
+EOF
+    exit 0
+}
+
 # Parse arguments
 for arg in "$@"; do
     case $arg in
@@ -54,8 +124,12 @@ for arg in "$@"; do
         --force)
             FORCE=true
             ;;
+        -h|--help)
+            show_help
+            ;;
         *)
             echo -e "${RED}Unknown option: $arg${NC}"
+            echo -e "Use ${YELLOW}--help${NC} to see available options."
             exit 1
             ;;
     esac
