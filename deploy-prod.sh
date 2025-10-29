@@ -69,6 +69,16 @@ if [ -f "generate-nginx-config.sh" ]; then
     ./generate-nginx-config.sh
 fi
 
+# Create external volumes if they don't exist
+echo "🔧 Ensuring external volumes exist..."
+if [ -f "scripts/create-volumes.sh" ]; then
+    ./scripts/create-volumes.sh prod
+else
+    echo "❌ Error: scripts/create-volumes.sh not found!"
+    exit 1
+fi
+echo ""
+
 # Fix storage permissions for production (Linux only, skip on macOS)
 if [ -d "./storage" ]; then
     # Check if running on Linux (where permissions are critical for Docker)
