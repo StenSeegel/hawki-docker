@@ -127,8 +127,8 @@ services:
             - ../nginx/nginx.default.conf:/etc/nginx/nginx.conf:ro
             # Live public directory
             - ../../public:/var/www/html/public:ro
-            # Storage for uploads (from main project)
-            - ../storage/app/public:/var/www/html/storage:ro
+            # Storage for uploads (corrected path - mount to storage/app/public inside nginx)
+            - ../../storage/app/public:/var/www/html/storage/app/public:ro
         ports:
             - ${DOCKER_PROJECT_IP:-0.0.0.0}:80:8080
             - ${DOCKER_PROJECT_IP:-0.0.0.0}:443:8443
