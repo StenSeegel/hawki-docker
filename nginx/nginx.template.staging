@@ -146,6 +146,10 @@ http {
 		        fastcgi_index  index.php;
 		        fastcgi_param  SCRIPT_FILENAME  /var/www/html/public/index.php;
 		        include        fastcgi_params;
+		        
+		        # Extended timeout for long-running AI operations (web search, reasoning)
+		        fastcgi_read_timeout 600s;
+		        fastcgi_send_timeout 600s;
 
 		    }
 		}
