@@ -301,7 +301,7 @@ All deploy scripts automatically configure HTTP proxy for the university network
 ```bash
 export HTTP_PROXY="http://10.60.3.254:3128"
 export HTTPS_PROXY="http://10.60.3.254:3128"
-export NO_PROXY="localhost,127.0.0.1"
+export NO_PROXY="localhost,127.0.0.1, reverb"
 ```
 
 This is passed to Docker build via `--build-arg` for:
