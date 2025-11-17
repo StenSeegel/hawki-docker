@@ -152,6 +152,8 @@ RUN --mount=type=cache,id=apt-cache,target=/var/cache/apt,sharing=locked \
     libldap-dev \
     libldap-2.5-0 \
     libldap-common \
+    # MySQL client for database backups (mysqldump)
+    default-mysql-client \
     && apt-get clean
 
 RUN --mount=type=cache,id=apt-cache,target=/var/cache/apt,sharing=locked \
