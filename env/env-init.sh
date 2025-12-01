@@ -489,6 +489,7 @@ EOF
         echo -e "${YELLOW}   Setting up /etc/hosts entries...${NC}"
         echo "127.0.0.1 app.hawki.dev" | sudo tee -a /etc/hosts > /dev/null
         echo "127.0.0.1 db.hawki.dev" | sudo tee -a /etc/hosts > /dev/null
+        echo "127.0.0.1 mail.hawki.dev" | sudo tee -a /etc/hosts > /dev/null
         echo -e "${GREEN}   ✓ /etc/hosts entries added${NC}"
     fi
     

@@ -249,6 +249,7 @@ echo ""
 echo "🌐 Access your application:"
 echo "   → https://app.hawki.dev     (HAWKI Application)"
 echo "   → https://db.hawki.dev      (Adminer - Database)"
+echo "   → https://mail.hawki.dev    (Mailpit - Email Testing)"
 echo ""
 if [ "$APP_URL" != "https://app.hawki.dev" ]; then
     echo "   Configured URL in .env:"

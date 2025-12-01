@@ -115,6 +115,20 @@ services:
         depends_on:
             mysql:
                 condition: service_healthy
+    
+    # ====================================================
+    # Mailpit (Email Testing - Dev Only)
+    # ====================================================
+    # Web UI: https://mail.hawki.dev
+    # SMTP: mailpit:1025
+    mailpit:
+        container_name: ${PROJECT_NAME}-mailpit
+        image: axllent/mailpit:latest
+        restart: no
+        environment:
+            MP_MAX_MESSAGES: 5000
+            MP_SMTP_AUTH_ACCEPT_ANY: 1
+            MP_SMTP_AUTH_ALLOW_INSECURE: 1
             
     # ====================================================
     # Nginx Web Server - DEV
