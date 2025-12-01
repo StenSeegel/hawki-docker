@@ -466,8 +466,39 @@ EOF
             -config "$CERTS_DIR/openssl-san-db.cnf" \
             > /dev/null 2>&1
         
+        # Create config for mail.hawki.dev
+        cat > "$CERTS_DIR/openssl-san-mail.cnf" << EOF
+[req]
+default_bits = 2048
+prompt = no
+default_md = sha256
+x509_extensions = v3_req
+distinguished_name = dn
+
+[dn]
+C = DE
+ST = Lower Saxony
+L = Hildesheim
+O = HAWKI Dev
+CN = mail.hawki.dev
+
+[v3_req]
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = mail.hawki.dev
+DNS.2 = localhost
+IP.1 = 127.0.0.1
+EOF
+        
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+            -keyout "$CERTS_DIR/mail.hawki.dev.key" \
+            -out "$CERTS_DIR/mail.hawki.dev.crt" \
+            -config "$CERTS_DIR/openssl-san-mail.cnf" \
+            > /dev/null 2>&1
+        
         # Clean up temporary config files
-        rm -f "$CERTS_DIR/openssl-san.cnf" "$CERTS_DIR/openssl-san-db.cnf"
+        rm -f "$CERTS_DIR/openssl-san.cnf" "$CERTS_DIR/openssl-san-db.cnf" "$CERTS_DIR/openssl-san-mail.cnf"
         
         # Create COPIES (not symlinks) for default cert (Docker for Mac has issues with symlinks)
         cp "$CERTS_DIR/app.hawki.dev.crt" "$CERTS_DIR/cert.pem"
@@ -480,6 +511,7 @@ EOF
             echo -e "${YELLOW}   Adding certificates to macOS keychain...${NC}"
             sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain "$CERTS_DIR/app.hawki.dev.crt" 2>/dev/null || true
             sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain "$CERTS_DIR/db.hawki.dev.crt" 2>/dev/null || true
+            sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain "$CERTS_DIR/mail.hawki.dev.crt" 2>/dev/null || true
             echo -e "${GREEN}   ✓ Certificates added to keychain${NC}"
         fi
     fi
