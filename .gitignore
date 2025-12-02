@@ -8,3 +8,4 @@ certs/cert.pem
 certs/db.hawki.dev.crt
 certs/db.hawki.dev.key
 certs/key.pem
+.vscode/*

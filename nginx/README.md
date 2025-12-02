@@ -6,14 +6,15 @@ This directory contains Nginx configuration templates for different deployment p
 
 - **`nginx.template.dev`** - Development environment template
   - Includes Adminer (database management) on `db.hawki.dev`
+  - Includes Mailpit (email testing) on `mail.hawki.dev`
   - Used when `DEPLOY_PROFILE=dev`
 
 - **`nginx.template.staging`** - Staging environment template
-  - No Adminer service (production-like)
+  - No Adminer or Mailpit services (production-like)
   - Used when `DEPLOY_PROFILE=staging`
 
 - **`nginx.template.prod`** - Production environment template
-  - No Adminer service
+  - No Adminer or Mailpit services
   - Production-optimized settings
   - Used when `DEPLOY_PROFILE=prod`
 
@@ -57,12 +58,14 @@ Templates use the following placeholders that are replaced during generation:
 ## Differences Between Templates
 
 ### Development (`nginx.template.dev`)
-- Includes Adminer database management interface
+- Includes Adminer database management interface on `db.hawki.dev`
+- Includes Mailpit email testing interface on `mail.hawki.dev`
 - Two additional server blocks for `db.hawki.dev` (HTTP redirect + HTTPS)
-- Suitable for local development with database access needs
+- Two additional server blocks for `mail.hawki.dev` (HTTP redirect + HTTPS)
+- Suitable for local development with database access and email testing needs
 
 ### Staging/Production (`nginx.template.staging`, `nginx.template.prod`)
-- No Adminer service
+- No Adminer or Mailpit services
 - Cleaner configuration focused on application serving
 - Production-ready setup
 
