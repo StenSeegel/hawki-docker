@@ -53,8 +53,10 @@ http {
         ssl_certificate   /etc/nginx/certs/cert.pem;
         ssl_certificate_key /etc/nginx/certs/key.pem;
 
-        # Filesize depending on your data
-        client_max_body_size 100m;
+        # Filesize depending on your data (increased for database imports)
+        client_max_body_size 500m;
+        client_body_timeout 300s;
+        
         ### SSL Configuration
 
         # set http headers for maximum security... as far as possible anyway.

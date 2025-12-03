@@ -53,8 +53,10 @@ http {
         ssl_certificate   /etc/nginx/certs/cert.pem;
         ssl_certificate_key /etc/nginx/certs/key.pem;
 
-        # Filesize depending on your data
-        client_max_body_size 100m;
+        # Filesize depending on your data (increased for database imports)
+        client_max_body_size 500m;
+        client_body_timeout 300s;
+        
         ### SSL Configuration
 
         # set http headers for maximum security... as far as possible anyway.
@@ -191,6 +193,10 @@ http {
         ssl_prefer_server_ciphers on;
         ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384;
         
+        # Allow large database imports
+        client_max_body_size 500M;
+        client_body_timeout 300s;
+        
         # Reverse proxy to Adminer container
         location / {
             proxy_pass http://adminer:8080;
@@ -281,8 +287,9 @@ http {
         ssl_prefer_server_ciphers on;
         ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384;
 
-        # Filesize depending on your data
-        client_max_body_size 100m;
+        # Filesize depending on your data (increased for database imports)
+        client_max_body_size 500m;
+        client_body_timeout 300s;
 
         # Security headers
         server_tokens off;
