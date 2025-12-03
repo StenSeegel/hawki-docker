@@ -233,9 +233,25 @@ docker compose -f _docker/compose/docker-compose.dev.yml exec app bash -c "php a
     php artisan optimize:clear"
 echo ""
 
+# Apply development configuration overwrites
+cd _docker
+if [ -f "scripts/apply-dev-overwrites.sh" ]; then
+    ./scripts/apply-dev-overwrites.sh
+fi
+cd ..
+echo ""
+
 # Generate git info
 echo "📝 Generating Git info..."
 docker compose -f _docker/compose/docker-compose.dev.yml exec app bash -c "git config --global --add safe.directory /var/www/html && /var/www/html/git_info.sh" 2>/dev/null || true
+echo ""
+
+# Run post-deployment commands
+cd _docker
+if [ -f "scripts/run-post-deployment-commands.sh" ]; then
+    ./scripts/run-post-deployment-commands.sh
+fi
+cd ..
 echo ""
 
 # Display success message
@@ -262,12 +278,18 @@ echo "   → Live code mounting (changes are instant)"
 echo "   → Debug mode enabled"
 echo "   → Detailed error pages"
 echo "   → Database management via Adminer"
+echo "   → Auto-applied dev config overwrites"
+echo "   → Custom post-deployment commands"
 echo ""
-echo "� Quick Commands:"
+echo "🛠️  Quick Commands:"
 echo "   Update code:         git pull && ./update-dev.sh"
 echo "   Restart containers:  docker compose restart"
 echo "   View logs:           docker compose logs -f app"
 echo "   Force rebuild:       ./deploy-dev.sh --build"
 echo "   Reinitialize env:    ./deploy-dev.sh --init"
+echo ""
+echo "⚙️  Customization:"
+echo "   Config overwrites:   env/dev-overwrites"
+echo "   Post-deploy cmds:    env/dev-cmds"
 echo ""
 echo "═══════════════════════════════════════════════════════"

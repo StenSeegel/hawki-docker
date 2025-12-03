@@ -1,0 +1,24 @@
+# =====================================================
+# HAWKI - Development Post-Deployment Commands
+# =====================================================
+# This file contains Artisan commands that will be
+# executed at the end of development deployment.
+#
+# Useful for automated test user creation, demo data
+# seeding, or other development-specific setup tasks.
+#
+# Format: One command per line (without 'php artisan')
+# Empty lines and lines starting with # are ignored
+#
+# File: _docker/env/dev-cmds
+# =====================================================
+
+# Example: Create test users automatically
+user:create-test --admin
+# user:create-test --student
+
+# Example: Import test data
+# import:test-users
+
+# Example: Run custom seeders
+# db:seed --class=DemoDataSeeder
