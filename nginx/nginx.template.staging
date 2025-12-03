@@ -92,7 +92,7 @@ http {
         add_header X-Content-Type-Options "nosniff" always;
 
         location /storage {
-            alias /var/www/html/storage;
+            alias /var/www/html/storage/app/public;
         }
 
         # Fix MIME types for JavaScript files in build directory
