@@ -24,14 +24,14 @@ show_help() {
     echo "  find        Find existing server certificates and private keys"
     echo "  copy        Copy certificates from another location"
     echo "  import      Find and copy system certificates automatically"
-    echo "  generate    Generate self-signed development certificates"
+    echo "  generate    Generate development certificates with mkcert"
     echo "  help        Show this help message"
     echo ""
     echo "Examples:"
     echo "  ./manage-certs.sh find"
     echo "  ./manage-certs.sh copy /path/to/source/certs"
     echo "  ./manage-certs.sh import hostname"
-    echo "  ./manage-certs.sh generate app.hawki.dev"
+    echo "  ./manage-certs.sh generate              # Generate all hawki.dev certificates"
     echo ""
     echo "═══════════════════════════════════════════════════════"
     echo ""
@@ -169,114 +169,132 @@ copy_certs() {
     echo ""
 }
 
-# Function to generate development certificates
+# Function to generate development certificates with mkcert
 generate_dev_certs() {
     local domain="$1"
     
-    if [ -z "$domain" ]; then
-        echo -e "${YELLOW}⚠️  No domain specified, using default: app.hawki.dev${NC}"
-        domain="app.hawki.dev"
-    fi
-    
     echo ""
-    echo -e "${BLUE}🔐 Generating self-signed certificate for: $domain${NC}"
+    echo -e "${BLUE}🔐 Generating development certificates with mkcert${NC}"
     echo ""
     
-    # Check if openssl is available
-    if ! command -v openssl &> /dev/null; then
-        echo -e "${RED}❌ Error: openssl is not installed${NC}"
-        echo "Please install openssl first"
+    # Check if mkcert is available
+    local mkcert_cmd=""
+    if command -v mkcert &> /dev/null; then
+        mkcert_cmd="mkcert"
+    elif [ -f "/opt/homebrew/bin/mkcert" ]; then
+        mkcert_cmd="/opt/homebrew/bin/mkcert"
+    elif [ -f "/usr/local/bin/mkcert" ]; then
+        mkcert_cmd="/usr/local/bin/mkcert"
+    else
+        echo -e "${RED}❌ Error: mkcert is not installed${NC}"
+        echo ""
+        echo "Please install mkcert first:"
+        echo "  brew install mkcert"
+        echo ""
+        echo "Then run:"
+        echo "  mkcert -install"
+        echo ""
         exit 1
     fi
     
-    # Create temporary OpenSSL config for SAN (Subject Alternative Name)
-    # Modern browsers (Chrome 58+) require SAN extension
-    local config_file="$SCRIPT_DIR/openssl-san-${domain}.cnf"
-    
-    echo "Creating OpenSSL configuration..."
-    cat > "$config_file" << EOF
-[req]
-default_bits = 2048
-prompt = no
-default_md = sha256
-x509_extensions = v3_req
-distinguished_name = dn
-
-[dn]
-C = DE
-ST = Lower Saxony
-L = Hildesheim
-O = HAWKI Dev
-CN = $domain
-
-[v3_req]
-subjectAltName = @alt_names
-
-[alt_names]
-DNS.1 = $domain
-DNS.2 = localhost
-IP.1 = 127.0.0.1
-EOF
-    
-    # Generate certificate with proper SAN extension
-    echo "Generating certificate with SAN extension..."
-    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-        -keyout "$SCRIPT_DIR/${domain}.key" \
-        -out "$SCRIPT_DIR/${domain}.crt" \
-        -config "$config_file" \
-        > /dev/null 2>&1
-    
-    # Clean up temporary config file
-    rm -f "$config_file"
-    
-    # Set permissions
-    chmod 600 "$SCRIPT_DIR/${domain}.key"
-    chmod 644 "$SCRIPT_DIR/${domain}.crt"
-    
-    echo ""
-    echo -e "${GREEN}✅ Certificate generated successfully!${NC}"
-    echo ""
-    echo "Generated files:"
-    echo "  - $SCRIPT_DIR/${domain}.key (private key)"
-    echo "  - $SCRIPT_DIR/${domain}.crt (certificate)"
-    echo ""
-    
-    # Also generate generic cert.pem and key.pem if they don't exist
-    if [ ! -f "$SCRIPT_DIR/cert.pem" ]; then
-        cp "$SCRIPT_DIR/${domain}.crt" "$SCRIPT_DIR/cert.pem"
-        echo "Created generic cert.pem"
-    fi
-    
-    if [ ! -f "$SCRIPT_DIR/key.pem" ]; then
-        cp "$SCRIPT_DIR/${domain}.key" "$SCRIPT_DIR/key.pem"
-        echo "Created generic key.pem"
-    fi
-    
-    echo ""
-    
-    # Add to macOS keychain if possible
-    if command -v security &> /dev/null; then
-        echo -e "${YELLOW}🔐 Adding certificate to macOS keychain...${NC}"
-        if sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain "$SCRIPT_DIR/${domain}.crt" 2>/dev/null; then
-            echo -e "${GREEN}✅ Certificate added to keychain${NC}"
-        else
-            echo -e "${YELLOW}⚠️  Could not add to keychain (requires sudo)${NC}"
-        fi
+    # Check if mkcert CA is installed
+    if ! $mkcert_cmd -CAROOT &> /dev/null; then
+        echo -e "${YELLOW}⚠️  mkcert CA not installed yet${NC}"
+        echo "Installing local CA..."
+        $mkcert_cmd -install
         echo ""
     fi
     
-    echo -e "${YELLOW}⚠️  Note: These are self-signed certificates for development only!${NC}"
-    echo "For production, use certificates from a trusted CA."
+    # Backup old certificates if they exist
+    if ls *.crt *.key &> /dev/null; then
+        echo "Backing up old certificates..."
+        mkdir -p old_certs
+        mv *.crt *.key old_certs/ 2>/dev/null || true
+        echo -e "${GREEN}✓${NC} Old certificates backed up to old_certs/"
+        echo ""
+    fi
+    
+    # Define all HAWKI domains
+    local domains=("app.hawki.dev" "db.hawki.dev" "mail.hawki.dev" "admin.hawki.dev")
+    
+    # If a specific domain was provided, only generate that one
+    if [ -n "$domain" ]; then
+        domains=("$domain")
+    fi
+    
+    echo "Generating certificates for the following domains:"
+    for d in "${domains[@]}"; do
+        echo "  - $d"
+    done
     echo ""
     
-    # Check if domain is in /etc/hosts
-    if [ "$domain" != "localhost" ] && [ "$domain" != "127.0.0.1" ]; then
-        if ! grep -q "$domain" /etc/hosts 2>/dev/null; then
-            echo -e "${YELLOW}💡 Tip: Add this domain to /etc/hosts:${NC}"
-            echo "   sudo sh -c 'echo \"127.0.0.1 $domain\" >> /etc/hosts'"
-            echo ""
+    # Generate certificates for each domain
+    for d in "${domains[@]}"; do
+        echo -e "${BLUE}Generating certificate for: $d${NC}"
+        
+        $mkcert_cmd \
+            -cert-file "$SCRIPT_DIR/${d}.crt" \
+            -key-file "$SCRIPT_DIR/${d}.key" \
+            "$d" localhost 127.0.0.1 ::1
+        
+        # Set appropriate permissions
+        chmod 644 "$SCRIPT_DIR/${d}.crt"
+        chmod 600 "$SCRIPT_DIR/${d}.key"
+        
+        echo ""
+    done
+    
+    # Create generic cert.pem and key.pem (use app.hawki.dev as default)
+    echo "Creating generic certificates (cert.pem/key.pem)..."
+    cp "$SCRIPT_DIR/app.hawki.dev.crt" "$SCRIPT_DIR/cert.pem"
+    cp "$SCRIPT_DIR/app.hawki.dev.key" "$SCRIPT_DIR/key.pem"
+    chmod 644 "$SCRIPT_DIR/cert.pem"
+    chmod 600 "$SCRIPT_DIR/key.pem"
+    
+    echo ""
+    echo -e "${GREEN}✅ All certificates generated successfully!${NC}"
+    echo ""
+    echo "Generated certificates:"
+    ls -lh "$SCRIPT_DIR"/*.crt "$SCRIPT_DIR"/*.key 2>/dev/null | grep -v old_certs | awk '{print "  - " $9 " (" $5 ")"}'
+    echo ""
+    
+    # Check /etc/hosts entries
+    echo -e "${BLUE}Checking /etc/hosts entries...${NC}"
+    local missing_hosts=()
+    for d in "${domains[@]}"; do
+        if [ "$d" != "localhost" ] && [ "$d" != "127.0.0.1" ]; then
+            if ! grep -q "$d" /etc/hosts 2>/dev/null; then
+                missing_hosts+=("$d")
+            fi
         fi
+    done
+    
+    if [ ${#missing_hosts[@]} -gt 0 ]; then
+        echo ""
+        echo -e "${YELLOW}⚠️  The following domains are missing from /etc/hosts:${NC}"
+        for d in "${missing_hosts[@]}"; do
+            echo "  - $d"
+        done
+        echo ""
+        echo -e "${YELLOW}� Add them with:${NC}"
+        for d in "${missing_hosts[@]}"; do
+            echo "   echo \"127.0.0.1 $d\" | sudo tee -a /etc/hosts"
+        done
+        echo ""
+    else
+        echo -e "${GREEN}✓${NC} All domains found in /etc/hosts"
+        echo ""
     fi
+    
+    echo -e "${GREEN}🎉 Certificate generation complete!${NC}"
+    echo ""
+    echo "Next steps:"
+    echo "  1. Copy certificates to your project: cp *.crt *.key /path/to/project/certs/"
+    echo "  2. Restart your web server to load the new certificates"
+    echo "  3. Restart your browser to trust the new certificates"
+    echo ""
+    echo -e "${BLUE}Note: These certificates are valid until $(date -v+825d '+%B %d, %Y' 2>/dev/null || date -d '+825 days' '+%B %d, %Y' 2>/dev/null || echo '~2 years from now')${NC}"
+    echo ""
 }
 
 # Function to import system certificates

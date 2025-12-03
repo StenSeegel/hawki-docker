@@ -522,6 +522,7 @@ EOF
         echo "127.0.0.1 app.hawki.dev" | sudo tee -a /etc/hosts > /dev/null
         echo "127.0.0.1 db.hawki.dev" | sudo tee -a /etc/hosts > /dev/null
         echo "127.0.0.1 mail.hawki.dev" | sudo tee -a /etc/hosts > /dev/null
+        echo "127.0.0.1 admin.hawki.dev" | sudo tee -a /etc/hosts > /dev/null
         echo -e "${GREEN}   ✓ /etc/hosts entries added${NC}"
     fi
     
@@ -549,9 +550,6 @@ if [ "$PROFILE" = "dev" ]; then
     echo ""
     echo -e "${YELLOW}📝 Next steps:${NC}"
     echo -e "   1. Review .env file: ${GREEN}nano $SCRIPT_DIR/.env${NC}"
-    echo -e "   2. Deploy: ${GREEN}./deploy-dev.sh${NC}"
-    echo -e "   3. Access: ${GREEN}https://app.hawki.dev${NC}"
-    echo -e "   4. Adminer: ${GREEN}https://db.hawki.dev${NC}"
 fi
 
 exit 0
