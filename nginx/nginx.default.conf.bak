@@ -28,9 +28,9 @@ http {
     }
 
     server {
-        ${NGINX_LISTEN_IPV6_HTTP}
-        listen ${NGINX_HTTP_PORT} default_server;
-        ${NGINX_LISTEN_EXTRA_PORT}
+        # IPv6 disabled
+        listen 8080 default_server;
+        # No extra port
 
         # Please note that return is cheaper than redirect
         # See: https://www.nginx.com/resources/wiki/start/topics/tutorials/config_pitfalls/#taxing-rewrites
@@ -40,10 +40,10 @@ http {
     }
 
     server {
-        ${NGINX_LISTEN_HTTPS_IPV4}
-        ${NGINX_LISTEN_HTTPS_IPV6}
-        ${NGINX_HTTP2_CONFIG}
-        server_name ${NGINX_SERVER_NAME};
+        listen 8443 ssl;
+        # IPv6 disabled for HTTPS
+        http2 on;
+        server_name app.hawki.dev;
 
         # Use the internal DNS resolver of Docker
         resolver 127.0.0.11 valid=30s;
@@ -92,7 +92,7 @@ http {
         add_header X-Content-Type-Options "nosniff" always;
 
         location /storage {
-            alias /var/www/html/storage/app/public;
+            alias /var/www/html/storage;
         }
 
         # Fix MIME types for JavaScript files in build directory
@@ -170,7 +170,7 @@ http {
     # Adminer (Database Management) - db.hawki.dev
     # =====================================================
     server {
-        listen ${NGINX_HTTP_PORT};
+        listen 8080;
         server_name db.hawki.dev;
         
         # Redirect HTTP to HTTPS
@@ -178,9 +178,9 @@ http {
     }
 
     server {
-        ${NGINX_LISTEN_HTTPS_IPV4}
-        ${NGINX_LISTEN_HTTPS_IPV6}
-        ${NGINX_HTTP2_CONFIG}
+        listen 8443 ssl;
+        # IPv6 disabled for HTTPS
+        http2 on;
         server_name db.hawki.dev;
         
         ssl_certificate   /etc/nginx/certs/db.hawki.dev.crt;
@@ -205,12 +205,13 @@ http {
             proxy_read_timeout 60s;
         }
     }
+}
 
     # =====================================================
-    # Mailpit (Email Testing - Dev Only) - mail.hawki.dev
+    # Mailpit (Email Testing) - mail.hawki.dev
     # =====================================================
     server {
-        listen ${NGINX_HTTP_PORT};
+        listen 8080;
         server_name mail.hawki.dev;
         
         # Redirect HTTP to HTTPS
@@ -218,9 +219,9 @@ http {
     }
 
     server {
-        ${NGINX_LISTEN_HTTPS_IPV4}
-        ${NGINX_LISTEN_HTTPS_IPV6}
-        ${NGINX_HTTP2_CONFIG}
+        listen 8443 ssl;
+        # IPv6 disabled for HTTPS
+        http2 on;
         server_name mail.hawki.dev;
         
         ssl_certificate   /etc/nginx/certs/mail.hawki.dev.crt;
@@ -239,7 +240,7 @@ http {
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
             
-            # WebSocket support for live updates
+            # WebSocket support
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection $connection_upgrade;
@@ -248,108 +249,6 @@ http {
             proxy_connect_timeout 60s;
             proxy_send_timeout 60s;
             proxy_read_timeout 60s;
-        }
-    }
-
-    # =====================================================
-    # Admin Portal (Dev Only) - admin.hawki.dev
-    # =====================================================
-    server {
-        listen ${NGINX_HTTP_PORT};
-        server_name admin.hawki.dev;
-        
-        # Redirect HTTP to HTTPS
-        return 301 https://$server_name$request_uri;
-    }
-
-    server {
-        ${NGINX_LISTEN_HTTPS_IPV4}
-        ${NGINX_LISTEN_HTTPS_IPV6}
-        ${NGINX_HTTP2_CONFIG}
-        server_name admin.hawki.dev;
-        
-        # Use the internal DNS resolver of Docker
-        resolver 127.0.0.11 valid=30s;
-
-        root /var/www/html/public;
-
-        ssl_certificate   /etc/nginx/certs/admin.hawki.dev.crt;
-        ssl_certificate_key /etc/nginx/certs/admin.hawki.dev.key;
-        
-        # SSL configuration
-        ssl_protocols TLSv1.2 TLSv1.3;
-        ssl_prefer_server_ciphers on;
-        ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384;
-
-        # Filesize depending on your data
-        client_max_body_size 100m;
-
-        # Security headers
-        server_tokens off;
-        add_header Referrer-Policy same-origin;
-        add_header Permissions-Policy "midi=(), sync-xhr=(), microphone=(), camera=(), magnetometer=(), gyroscope=(), fullscreen=(self), payment=()";
-        add_header X-Frame-Options "SAMEORIGIN" always;
-        add_header X-Xss-Protection "1; mode=block" always;
-        add_header X-Content-Type-Options "nosniff" always;
-
-        location /storage {
-            alias /var/www/html/storage/app/public;
-        }
-
-        # Fix MIME types for JavaScript files in build directory
-        location ~* ^/build/.*\.(js|mjs)$ {
-            types {
-                application/javascript js mjs;
-            }
-            default_type application/javascript;
-            add_header Cache-Control "public, max-age=31536000, immutable";
-        }
-
-        # Laravel Reverb WebSocket
-        location ~ ^/app/(.*)$ {
-          proxy_pass http://reverb:8080/app/$1;
-          proxy_http_version 1.1;
-          proxy_set_header Upgrade $http_upgrade;
-          proxy_set_header Connection $connection_upgrade;
-          proxy_set_header Host $host;
-          proxy_set_header X-Real-IP $remote_addr;
-          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-          proxy_set_header X-Forwarded-Proto $scheme;
-          proxy_set_header X-Forwarded-Host $host;
-          proxy_set_header X-Forwarded-Port $server_port;
-          proxy_connect_timeout 2h;
-          proxy_send_timeout    2h;
-          proxy_read_timeout    2h;
-          proxy_buffering off;
-        }
-
-        location ~ ^/apps/([^/]+)/events$ {
-          proxy_pass http://reverb:8080/apps/$1/events;
-          proxy_set_header Host $host;
-          proxy_set_header X-Real-IP $remote_addr;
-          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-          proxy_set_header X-Forwarded-Proto $scheme;
-        }
-
-        location / {
-            try_files $uri $uri/ /index.php?$query_string;
-            index index.php index.html index.htm;
-            location ~ .php$ {
-                fastcgi_pass   app:9000;
-                fastcgi_index  index.php;
-                fastcgi_param  SCRIPT_FILENAME  /var/www/html/public/index.php;
-                include        fastcgi_params;
-                fastcgi_read_timeout 600s;
-                fastcgi_send_timeout 600s;
-            }
-        }
-
-        # nginx Status
-        location /nginx-status {
-            allow 127.0.0.1;
-            deny all;
-            access_log off;
-            stub_status;
         }
     }
 }
