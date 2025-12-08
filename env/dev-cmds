@@ -7,6 +7,10 @@
 # Useful for automated test user creation, demo data
 # seeding, or other development-specific setup tasks.
 #
+# Note: The 'texts:seed' command is already executed
+# automatically in the main deployment script, so you
+# don't need to add it here.
+#
 # Format: One command per line (without 'php artisan')
 # Empty lines and lines starting with # are ignored
 #
@@ -22,3 +26,6 @@ user:create-test --admin
 
 # Example: Run custom seeders
 # db:seed --class=DemoDataSeeder
+
+# Note: To manually update system text keys (already done automatically):
+# texts:seed

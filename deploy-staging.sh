@@ -299,6 +299,11 @@ docker compose -f _docker/compose/docker-compose.staging.yml exec app bash -c "\
     php artisan optimize:clear"
 echo ""
 
+# Update system texts with new keys
+echo "📝 Updating system text keys..."
+docker compose -f _docker/compose/docker-compose.staging.yml exec app php artisan texts:seed
+echo ""
+
 # Fix storage permissions inside container
 echo "🔒 Setting storage permissions inside container..."
 docker compose -f _docker/compose/docker-compose.staging.yml exec app bash -c "\

@@ -233,6 +233,11 @@ docker compose -f _docker/compose/docker-compose.dev.yml exec app bash -c "php a
     php artisan optimize:clear"
 echo ""
 
+# Update system texts with new keys
+echo "📝 Updating system text keys..."
+docker compose -f _docker/compose/docker-compose.dev.yml exec app php artisan texts:seed
+echo ""
+
 # Apply development configuration overwrites
 cd _docker
 if [ -f "scripts/apply-dev-overwrites.sh" ]; then

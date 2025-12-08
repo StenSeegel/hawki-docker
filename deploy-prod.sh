@@ -171,6 +171,9 @@ docker compose -f _docker/compose/docker-compose.prod.yml exec app bash -c "php 
     php artisan view:cache && \
     php artisan optimize:clear"
 
+echo "📝 Updating system text keys..."
+docker compose -f _docker/compose/docker-compose.prod.yml exec app php artisan texts:seed
+
 echo "📝 Generating Git info..."
 docker compose -f _docker/compose/docker-compose.prod.yml exec app bash -c "echo '[]' > /var/www/html/storage/app/test_users.json && git config --global --add safe.directory /var/www/html && /var/www/html/git_info.sh"
 
