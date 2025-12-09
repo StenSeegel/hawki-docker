@@ -126,8 +126,9 @@ services:
         volumes:
             - ../certs:/etc/nginx/certs
             - ../nginx/nginx.default.conf:/etc/nginx/nginx.conf:ro
-            # Mount storage from host for uploads (read-only for nginx)
-            - ../storage/app/public:/var/www/html/storage:ro
+            # Mount storage/app/public from host for uploads (read-only for nginx)
+            # This maps to /storage/* URLs via public/storage symlink or nginx location
+            - ../storage/app/public:/var/www/html/storage/app/public:ro
             # Mount build directory with Vite assets
             - staging_build:/var/www/html/public/build:ro
         # Share filesystem from app container to access public/ files (css, js, img, etc.) from Docker image
