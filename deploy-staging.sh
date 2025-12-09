@@ -243,19 +243,17 @@ fi
 if [ "$FORCE_BUILD" = true ]; then
     echo "🔨 Building Docker images from repository..."
     
-    # Stop containers first to release volume locks (but keep volumes!)
-    echo "🛑 Stopping existing containers..."
-    docker compose -f _docker/compose/docker-compose.staging.yml stop
+    # Remove containers completely to release volume locks
+    echo "🛑 Removing existing containers (preserving database & user uploads)..."
+    docker compose -f _docker/compose/docker-compose.staging.yml down
     
     # ONLY remove staging_build volume (NOT staging_public with user uploads!)
     echo "🗑️  Removing old build assets volume (preserving database & user uploads)..."
     VOLUME_NAME="${PROJECT_NAME}_staging_build"
     if docker volume inspect "$VOLUME_NAME" >/dev/null 2>&1; then
-        docker volume rm "$VOLUME_NAME" || {
+        docker volume rm "$VOLUME_NAME" 2>/dev/null || {
             echo "⚠️  Could not remove volume $VOLUME_NAME (might still be in use)"
-            echo "   Removing containers completely..."
-            docker compose -f _docker/compose/docker-compose.staging.yml down
-            docker volume rm "$VOLUME_NAME" 2>/dev/null || true
+            echo "   Please check: docker ps -a | grep staging"
         }
     else
         echo "   Volume $VOLUME_NAME does not exist, skipping..."
