@@ -36,10 +36,10 @@ services:
             # NO code mount - code is in the image
             # Only mount external files/directories
             - ../env/.env:/var/www/html/.env:ro
-            # Mount entire storage directory from host (simpler, no volume conflicts)
+            # Mount entire storage directory from host (includes user uploads via public/storage symlink)
             - ../storage:/var/www/html/storage
-            # Mount public first, then override build subdirectory
-            - staging_public:/var/www/html/public
+            # Mount ONLY the build directory for Vite assets
+            # All other public assets (css/, js/, img/, etc.) come from Docker image
             - staging_build:/var/www/html/public/build
             # Mount config files
             - ../config/model_providers.php:/var/www/html/config/model_providers.php:ro
@@ -226,8 +226,7 @@ volumes:
     staging_build:
         name: hawki-staging_staging_build
         driver: local
-    staging_public:
-        name: hawki-staging_staging_public
-        driver: local
+    # Note: staging_public volume removed - static assets (css, js, img) come from Docker image
+    # User uploads are handled via storage mount + public/storage symlink in image
 
 
