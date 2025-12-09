@@ -297,6 +297,9 @@ COPY --chown=www-data:www-data . .
 COPY --from=node_builder --chown=www-data:www-data /var/www/html/public/build /var/www/html/public/build
 RUN rm -rf /var/www/html/hot
 
+# Declare public directory as a volume so it can be shared with nginx via volumes_from
+VOLUME /var/www/html/public
+
 # Install the composer dependencies WITHOUT dev dependencies for staging
 # Note: We don't use --no-autoloader because composer-include-files plugin needs autoload during post-install
 RUN --mount=type=cache,id=composer-cache,target=/var/www/html/.composer-cache \
