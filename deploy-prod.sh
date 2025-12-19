@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e  # Exit on error
 
+# Load shared functions
+source "$(dirname "$0")/.deploy-functions.sh"
+
 echo "🚀 Starting HAWKI Production Deployment (build from image)..."
 
 # =====================================================
@@ -55,6 +58,9 @@ ensure_dockerfile_exists() {
 
 # Check and copy Dockerfile if needed
 ensure_dockerfile_exists
+
+# Check and copy docker configs if needed
+ensure_docker_configs_exist
 
 # Check if .env file exists
 if [ ! -f ".env" ]; then
@@ -159,6 +165,11 @@ fi
 echo "🔨 Building app image..."
 docker compose -f _docker/compose/docker-compose.prod.yml build \
   --no-cache --pull app
+
+# Clean up copied config files after successful build
+cd _docker
+cleanup_docker_configs
+cd ..
 
 echo "🚢 Starting containers..."
 docker compose -f _docker/compose/docker-compose.prod.yml up -d --force-recreate --remove-orphans

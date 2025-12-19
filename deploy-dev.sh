@@ -4,6 +4,9 @@ set -e  # Exit on error
 echo "🚀 Starting HAWKI Development Deployment..."
 echo ""
 
+# Load shared functions
+source "$(dirname "$0")/.deploy-functions.sh"
+
 # =====================================================
 # Ensure Dockerfile exists in parent directory
 # =====================================================
@@ -56,6 +59,9 @@ ensure_dockerfile_exists() {
 
 # Check and copy Dockerfile if needed
 ensure_dockerfile_exists
+
+# Check and copy docker configs if needed
+ensure_docker_configs_exist
 
 # Stop any running staging/prod containers first (they use the same ports)
 if docker ps --format '{{.Names}}' | grep -qE '^hawki-(staging|prod)-'; then
@@ -194,6 +200,11 @@ if [ "$FORCE_BUILD" = true ]; then
       $PROXY_ARGS \
       --pull app
     echo ""
+    
+    # Clean up copied config files after successful build
+    cd _docker
+    cleanup_docker_configs
+    cd ..
 fi
 
 echo "🚢 Starting containers..."

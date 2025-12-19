@@ -19,6 +19,9 @@
 
 set -e  # Exit on error
 
+# Load shared functions
+source "$(dirname "$0")/.deploy-functions.sh"
+
 echo "🚀 Starting HAWKI Staging Deployment..."
 echo ""
 
@@ -74,6 +77,9 @@ ensure_dockerfile_exists() {
 
 # Check and copy Dockerfile if needed
 ensure_dockerfile_exists
+
+# Check and copy docker configs if needed
+ensure_docker_configs_exist
 
 # Stop any running dev/prod containers first (they use the same ports)
 if docker ps --format '{{.Names}}' | grep -qE '^hawki-(dev|prod)-'; then
@@ -268,6 +274,11 @@ if [ "$FORCE_BUILD" = true ]; then
       --build-arg CACHEBUST=$CACHEBUST \
       app
     echo ""
+    
+    # Clean up copied config files after successful build
+    cd _docker
+    cleanup_docker_configs
+    cd ..
 fi
 
 # Prepare proxy args for docker compose up --build
