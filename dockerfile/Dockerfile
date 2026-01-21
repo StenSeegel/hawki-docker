@@ -190,7 +190,10 @@ COPY docker/php/config/php.common.ini /usr/local/etc/php/conf.d/zzz.app.common.i
 COPY docker/php/config/php.prod.ini /usr/local/etc/php/conf.d/zzz.app.prod.ini
 COPY docker/php/config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-COPY --chown=1000:1000 --chmod=+x docker/php/bin /user/bin/app
+# Create entrypoint script inline to ensure it exists
+RUN mkdir -p /user/bin/app && \
+    printf '#!/bin/bash\n# This allows the final image to hook in its own script files\nif [ -f ${BASH_SOURCE%%/*}/boot.local.sh ]; then\n\tsource ${BASH_SOURCE%%/*}/boot.local.sh;\nfi\n\nbash -c "${*}"\n' > /user/bin/app/entrypoint.sh && \
+    chmod +x /user/bin/app/entrypoint.sh
 
 ENTRYPOINT ["/user/bin/app/entrypoint.sh"]
 CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
@@ -309,5 +312,9 @@ RUN --mount=type=cache,id=composer-cache,target=/var/www/html/.composer-cache \
 
 USER root
 
-# Use production entrypoint (staging doesn't need dev tools)
-# Debug mode is enabled via APP_DEBUG=true in .env.staging
+# Create boot.local.sh inline for staging
+RUN printf '#!/bin/bash\nmkdir -p /var/www/html/storage/framework/{cache,sessions,testing,views}\nchmod -R 777 /var/www/html/storage/framework\n\nif [ -f /var/www/prepareEnvVariables.php ]; then\n    php /var/www/prepareEnvVariables.php\nfi\n\nphp artisan config:cache\nphp artisan route:cache\nphp artisan view:cache\n' > /user/bin/app/boot.local.sh && \
+    chmod +x /user/bin/app/boot.local.sh
+
+# Staging inherits ENTRYPOINT and CMD from app_root
+# Supervisord will start php-fpm automatically
