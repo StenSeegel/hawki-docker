@@ -257,6 +257,11 @@ fi
 if [ "$DO_BUILD" = true ]; then
     echo "🔨 Building Docker images from repository (containers are still running)..."
     
+    # Ensure all required config files are in place before building
+    cd _docker
+    ensure_docker_configs_exist
+    cd ..
+
     # Generate cache bust value to force frontend rebuild
     CACHEBUST=$(date +%s)
     echo "🔄 Cache bust: $CACHEBUST"
@@ -268,10 +273,9 @@ if [ "$DO_BUILD" = true ]; then
     echo "✅ Build complete."
     echo ""
     
-    # Clean up copied config files after successful build
-    cd _docker
-    cleanup_docker_configs
-    cd ..
+    # We skip cleanup_docker_configs here because it is too aggressive 
+    # and might delete files that are not present in the _docker source.
+    echo "ℹ️  Skipping cleanup to preserve docker configuration files."
 fi
 
 if [ "$DO_UPDATE" = true ]; then
