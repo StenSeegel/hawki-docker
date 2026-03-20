@@ -276,7 +276,7 @@ RUN rm -rf /var/www/html/hot
 RUN --mount=type=cache,id=composer-cache,target=/var/www/html/.composer-cache \
     --mount=type=bind,from=composer:2,source=/usr/bin/composer,target=/usr/bin/composer \
     export COMPOSER_CACHE_DIR="/var/www/html/.composer-cache" \
-    && composer install --no-dev --no-progress --no-interaction --verbose --no-autoloader --no-scripts
+    && composer install --no-dev --no-progress --no-interaction --verbose --no-autoloader --no-scripts --no-plugins
 
 # Dump the autoload file and run the matching scripts, after all the project files are in the image
 RUN --mount=type=bind,from=composer:2,source=/usr/bin/composer,target=/usr/bin/composer \
@@ -312,7 +312,7 @@ VOLUME /var/www/html/public
 RUN --mount=type=cache,id=composer-cache,target=/var/www/html/.composer-cache \
     --mount=type=bind,from=composer:2,source=/usr/bin/composer,target=/usr/bin/composer \
     export COMPOSER_CACHE_DIR="/var/www/html/.composer-cache" \
-    && composer install --no-dev --no-progress --no-interaction --verbose --no-autoloader --no-scripts
+    && composer install --no-dev --no-progress --no-interaction --verbose --no-autoloader --no-scripts --no-plugins
 
 # Dump the autoload file
 RUN --mount=type=bind,from=composer:2,source=/usr/bin/composer,target=/usr/bin/composer \
