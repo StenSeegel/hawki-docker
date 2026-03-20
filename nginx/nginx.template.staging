@@ -68,6 +68,8 @@ http {
         # Remove token
         server_tokens off;
 
+        # CORS Header
+        add_header Access-Control-Allow-Origin "*" always;
         # Set CSP
         # Please note that CSP are very tricky and can be quite advanced to get right
         # For most optimal security however they are absolutely mandatory
