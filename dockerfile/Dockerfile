@@ -154,6 +154,7 @@ RUN --mount=type=cache,id=apt-cache,target=/var/cache/apt,sharing=locked \
     libldap-common \
     # MySQL client for database backups (mysqldump)
     default-mysql-client \
+    unzip \
     && apt-get clean
 
 RUN --mount=type=cache,id=apt-cache,target=/var/cache/apt,sharing=locked \
@@ -270,12 +271,16 @@ COPY --chown=www-data:www-data . .
 COPY --from=node_builder --chown=www-data:www-data /var/www/html/public/build /var/www/html/public/build
 RUN rm -rf /var/www/html/hot
 
-# Install the composer dependencies, without dev dependencies
-# Note: We don't use --no-autoloader because composer-include-files plugin needs autoload during post-install
+# Install the composer dependencies, without running any scripts, this allows us to install the dependencies
+# in a single layer and caching them even if the source files are changed
 RUN --mount=type=cache,id=composer-cache,target=/var/www/html/.composer-cache \
     --mount=type=bind,from=composer:2,source=/usr/bin/composer,target=/usr/bin/composer \
     export COMPOSER_CACHE_DIR="/var/www/html/.composer-cache" \
-    && composer install --no-dev --no-progress --no-interaction --verbose --optimize-autoloader --classmap-authoritative
+    && composer install --no-dev --no-progress --no-interaction --verbose --no-autoloader --no-scripts
+
+# Dump the autoload file and run the matching scripts, after all the project files are in the image
+RUN --mount=type=bind,from=composer:2,source=/usr/bin/composer,target=/usr/bin/composer \
+    composer dump-autoload --no-dev --optimize --no-interaction --verbose --no-cache
 
 # Create the script that prepares the env variables when the container boots
 COPY docker/php/prepareEnvVariables.php /var/www/prepareEnvVariables.php
@@ -304,11 +309,14 @@ RUN rm -rf /var/www/html/hot
 VOLUME /var/www/html/public
 
 # Install the composer dependencies WITHOUT dev dependencies for staging
-# Note: We don't use --no-autoloader because composer-include-files plugin needs autoload during post-install
 RUN --mount=type=cache,id=composer-cache,target=/var/www/html/.composer-cache \
     --mount=type=bind,from=composer:2,source=/usr/bin/composer,target=/usr/bin/composer \
     export COMPOSER_CACHE_DIR="/var/www/html/.composer-cache" \
-    && composer install --no-dev --no-progress --no-interaction --verbose --optimize-autoloader --classmap-authoritative
+    && composer install --no-dev --no-progress --no-interaction --verbose --no-autoloader --no-scripts
+
+# Dump the autoload file
+RUN --mount=type=bind,from=composer:2,source=/usr/bin/composer,target=/usr/bin/composer \
+    composer dump-autoload --no-dev --optimize --classmap-authoritative --no-interaction --verbose --no-cache
 
 USER root
 
