@@ -5,8 +5,9 @@
 # Ensure Dockerfile exists in parent directory
 # =====================================================
 ensure_dockerfile_exists() {
-    local parent_dir="$(cd .. && pwd)"
-    local dockerfile_source="$(pwd)/dockerfile"
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local parent_dir="$(dirname "$script_dir")"
+    local dockerfile_source="$script_dir/dockerfile"
     
     if [ ! -d "$dockerfile_source" ] || [ ! -f "$dockerfile_source/Dockerfile" ]; then
         echo "❌ Error: dockerfile/Dockerfile not found in _docker directory!"
@@ -18,9 +19,9 @@ ensure_dockerfile_exists() {
         if ! cmp -s "$dockerfile_source/Dockerfile" "$parent_dir/Dockerfile"; then
             echo "⚠️  Dockerfile already exists in project root but differs from submodule version."
             echo ""
-            read -p "Do you want to overwrite it with the version from _docker/dockerfile/? (yes/no): " -r
+            read -p "Do you want to overwrite it with the version from _docker/dockerfile/? (y/n): " -r
             echo
-            if [[ $REPLY =~ ^[Yy][Ee][Ss]$ ]]; then
+            if [[ $REPLY =~ ^[Yy]([Ee][Ss])?$ ]]; then
                 cp "$dockerfile_source/Dockerfile" "$parent_dir/Dockerfile"
                 echo "✅ Dockerfile updated from submodule"
                 
@@ -44,7 +45,7 @@ ensure_dockerfile_exists() {
         # Also copy DOCKER.md if it exists (optional documentation)
         if [ -f "$dockerfile_source/DOCKER.md" ]; then
             cp "$dockerfile_source/DOCKER.md" "$parent_dir/DOCKER.md"
-            echo "✅ DOCKER.md copied to $parent_dir/DOCKER.md"
+            echo "✅ DOCKER.md updated from submodule"
         fi
         
         echo ""
@@ -55,10 +56,16 @@ ensure_dockerfile_exists() {
 # Ensure docker config files exist in parent directory
 # =====================================================
 ensure_docker_configs_exist() {
-    local parent_dir="$(cd .. && pwd)"
-    local source_dir="$(pwd)"
-    local needs_copy=false
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local parent_dir="$(dirname "$script_dir")"
+    local source_dir="$script_dir"
     
+    # Check and copy certs directory if needed
+    if [ ! -d "$parent_dir/certs" ]; then
+        echo "📋 First-time setup: Copying certs directory to project root..."
+        cp -r "$source_dir/certs" "$parent_dir/certs"
+        echo "✅ Certs directory copied"
+    fi    
     echo "🔧 Checking docker configuration files..."
     
     # Check PHP config files
