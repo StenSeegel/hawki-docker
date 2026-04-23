@@ -181,27 +181,30 @@ fi
 echo ""
 
 # Fix storage permissions for staging (Linux only, skip on macOS)
-if [ -d "./storage" ]; then
-    # Check if running on Linux (where permissions are critical for Docker)
-    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        echo "📁 Setting storage ownership and permissions (Linux)..."
-        STORAGE_UID=${DOCKER_UID:-33}
-        STORAGE_GID=${DOCKER_GID:-33}
-        
-        # Use sudo only if not root
-        if [ "$EUID" -ne 0 ]; then
-            sudo chown -R ${STORAGE_UID}:${STORAGE_GID} ./storage 2>/dev/null || true
+# Only run on build or init, not on update to avoid massive slowdowns
+if [ "$DO_BUILD" = true ] || [ "$FORCE_INIT" = true ]; then
+    if [ -d "./storage" ]; then
+        # Check if running on Linux (where permissions are critical for Docker)
+        if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+            echo "📁 Setting storage ownership and permissions (Linux)..."
+            STORAGE_UID=${DOCKER_UID:-33}
+            STORAGE_GID=${DOCKER_GID:-33}
+            
+            # Use sudo only if not root
+            if [ "$EUID" -ne 0 ]; then
+                sudo chown -R ${STORAGE_UID}:${STORAGE_GID} ./storage 2>/dev/null || true
+            else
+                chown -R ${STORAGE_UID}:${STORAGE_GID} ./storage 2>/dev/null || true
+            fi
+            
+            chmod -R 775 ./storage 2>/dev/null || true
+            find ./storage -type f -exec chmod 664 {} \; 2>/dev/null || true
+            echo "✅ Storage permissions set (UID:${STORAGE_UID}, GID:${STORAGE_GID})"
+            echo ""
         else
-            chown -R ${STORAGE_UID}:${STORAGE_GID} ./storage 2>/dev/null || true
+            # Skipping storage permissions (not on Linux, Docker handles this)
+            echo ""
         fi
-        
-        chmod -R 775 ./storage 2>/dev/null || true
-        find ./storage -type f -exec chmod 664 {} \; 2>/dev/null || true
-        echo "✅ Storage permissions set (UID:${STORAGE_UID}, GID:${STORAGE_GID})"
-        echo ""
-    else
-        # Skipping storage permissions (not on Linux, Docker handles this)
-        echo ""
     fi
 fi
 
